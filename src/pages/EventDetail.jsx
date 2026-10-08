@@ -11,7 +11,7 @@ import {
 const IMG = (id) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=1400&q=70`;
 
 /* ✅ Guaranteed fallback if any image ever fails */
-const FALLBACK_IMG = "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/06d3930e4-f1fd-4535-ae9d-3790a53d96e75167.png";
+const FALLBACK_IMG = "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=1400&q=80";
 const onImgError = (e) => {
   if (e.currentTarget.src !== FALLBACK_IMG) e.currentTarget.src = FALLBACK_IMG;
 };
@@ -65,7 +65,22 @@ export default function EventDetail() {
   }
 
   /* ✅ NEW: supports full img URLs (new events) AND old imgId format */
-  const heroImg = event.img || IMG(event.imgId);
+  const SPORT_FALLBACKS = {
+    Cricket: "https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&w=1400&q=80",
+    Football: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=1400&q=80",
+    Basketball: "https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=1400&q=80",
+    Badminton: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1400&q=80",
+    Tennis: "https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&w=1400&q=80",
+    Volleyball: "https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?auto=format&fit=crop&w=1400&q=80",
+    Boxing: "https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?auto=format&fit=crop&w=1400&q=80",
+    Swimming: "https://images.unsplash.com/photo-1530549387789-4c1017266635?auto=format&fit=crop&w=1400&q=80",
+    Marathon: "https://images.unsplash.com/photo-1552674605-db764573271e?auto=format&fit=crop&w=1400&q=80",
+    Hockey: "https://images.unsplash.com/photo-1526232761682-d26e03ac148e?auto=format&fit=crop&w=1400&q=80",
+    "Table Tennis": "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1400&q=80",
+  };
+  const heroImg = event.img && !event.img.includes("image.qwenlm.ai")
+    ? event.img
+    : (SPORT_FALLBACKS[event.types?.[0]] || FALLBACK_IMG);
 
   const status = statusOf(event);
   const ended = status === "Event Over";
