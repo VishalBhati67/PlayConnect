@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const HERO_VIDEO =
-  "https://commons.wikimedia.org/wiki/Special:Redirect/file/Latvia-Gibraltar_football_2026-03-31.webm";
+  "https://upload.wikimedia.org/wikipedia/commons/3/30/O_Jogo_Bonito_%28The_Beautiful_Game%29.webm";
 
 const SPORTS = [
   { name: "Football", emoji: "⚽", img: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=900&q=80" },
@@ -95,7 +95,7 @@ export default function Home() {
             playsInline
             preload="metadata"
             poster={SPORTS[0].img}
-            className="h-full w-full object-cover opacity-45"
+            className="h-full w-full object-cover opacity-38 saturate-[0.85] contrast-[1.08]"
           >
             <source src={HERO_VIDEO} type="video/webm" />
           </video>
