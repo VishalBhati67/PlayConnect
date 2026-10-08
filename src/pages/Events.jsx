@@ -31,7 +31,7 @@ const onImgError = (e) => {
 };
 
 /* ── 25+ EVENTS · fresh Oct–Dec 2026 dates · stable working images ── */
-const SEED_EVENTS = [
+export const SEED_EVENTS = [
   { title: "Bandra Table Tennis Grand Prix", types: ["Table Tennis"], city: "Mumbai", district: "Bandra West", venue: "Spin City Arena", date: "2026-10-17", price: 350, capacity: 64, registered: 38, prizePool: 25000, description: "Singles & doubles brackets with skill-based draws. Tables and balls provided.", img: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=900&q=80" },
   { title: "Mumbai Football 7s Night Cup", types: ["Football"], city: "Mumbai", district: "Andheri", venue: "Andheri Sports Turf", date: "2026-10-18", price: 800, capacity: 16, registered: 11, prizePool: 60000, description: "Floodlit 7-a-side knockout cup with referees, live scoring and medals.", img: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=900&q=80" },
   { title: "MLBx Mumbai 3-on-3 Baseball Showcase", types: ["Baseball"], city: "Mumbai", district: "Andheri", venue: "Mumbai Football Arena", date: "2026-10-24", price: 500, capacity: 120, registered: 76, prizePool: 75000, description: "Fast-paced 3-on-3 baseball showcase with fan activities and live entertainment.", img: "https://images.unsplash.com/photo-1508344928928-7165b67de128?auto=format&fit=crop&w=900&q=80" },
@@ -72,7 +72,7 @@ const statusOf = (e) => {
 
 export default function Events() {
   const navigate = useNavigate();
-  const [events, setEvents] = useState([]);
+  const [events, setEvents] = useState(SEED_EVENTS.map((e) => ({ ...e, id: `local-${e.title}` })));
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
   const [city, setCity] = useState("All Cities");
@@ -83,32 +83,37 @@ export default function Events() {
     const q = query(collection(db, "events"));
     const unsub = onSnapshot(q, async (snap) => {
       const existing = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      setEvents(existing);
+
+      // Always keep the fresh catalog visible, even when Firestore write rules
+      // prevent the browser from inserting the new seed records.
+      const existingTitles = new Set(existing.map((e) => e.title));
+      const localMissing = SEED_EVENTS
+        .filter((e) => !existingTitles.has(e.title))
+        .map((e) => ({ ...e, id: `local-${e.title}` }));
+
+      setEvents([...existing, ...localMissing]);
       setLoading(false);
 
-      // Migrate the new event catalog into an existing Firebase database.
-      // Only events whose title is missing are added, so refreshes do not duplicate them.
+      // Best-effort database sync. Display does not depend on this succeeding.
       if (!syncStarted.current) {
         syncStarted.current = true;
-        const existingTitles = new Set(existing.map((e) => e.title));
-        const missingEvents = SEED_EVENTS.filter((e) => !existingTitles.has(e.title));
-
-        if (missingEvents.length > 0) {
+        if (localMissing.length > 0) {
           try {
             await Promise.all(
-              missingEvents.map((event) => {
+              localMissing.map((event) => {
                 const safeId = `seed-${event.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
                 return setDoc(doc(db, "events", safeId), event, { merge: true });
               })
             );
-            console.log(`PlayConnect: added ${missingEvents.length} new events.`);
           } catch (err) {
-            console.error("Event catalog sync failed:", err);
+            console.warn("Firebase event sync skipped/blocked; local events remain visible.", err);
           }
         }
       }
     }, (err) => {
       console.error("Firestore error:", err);
+      // Even if Firestore read fails, show the fresh catalog.
+      setEvents(SEED_EVENTS.map((e) => ({ ...e, id: `local-${e.title}` })));
       setLoading(false);
     });
     return () => unsub();
