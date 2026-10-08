@@ -134,6 +134,28 @@ export default function Dashboard() {
         </div>
       </div>
 
+      <section className="grid gap-4 md:grid-cols-[1.4fr_.6fr]">
+        <div className="relative overflow-hidden rounded-2xl border border-[#10B981]/20 bg-gradient-to-br from-[#071C18] via-slate-900 to-slate-950 p-5">
+          <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[#10B981]/10 blur-3xl" />
+          <div className="relative flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#10B981]">Player Progress</p>
+              <h2 className="mt-1 text-lg font-black text-white">Keep your momentum going</h2>
+              <p className="mt-1 text-xs text-slate-400">Play, book and join games to build your PC Points.</p>
+            </div>
+            <span className="rounded-full border border-[#FBBF24]/30 bg-[#FBBF24]/10 px-3 py-1 text-[10px] font-black text-[#FBBF24]">{user?.tier || "Bronze"} · {user?.points ?? 0} XP</span>
+          </div>
+          <div className="mt-5">
+            <div className="mb-2 flex items-center justify-between text-[11px]"><span className="text-slate-500">Progress to next level</span><span className="font-bold text-[#6EE7B7]">{Math.min(100, Math.round(((user?.points ?? 0) % 1000) / 10))}%</span></div>
+            <div className="h-2 overflow-hidden rounded-full bg-slate-800"><div className="h-full rounded-full bg-gradient-to-r from-[#10B981] to-[#6EE7B7]" style={{ width: `${Math.min(100, Math.round(((user?.points ?? 0) % 1000) / 10))}%` }} /></div>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Link to="/games" className="rounded-2xl border border-white/10 bg-white/[0.035] p-4 hover:border-[#10B981]/30 hover:bg-[#10B981]/5"><Gamepad2 size={18} className="text-[#10B981]" /><p className="mt-3 text-sm font-bold text-white">Find Game</p><p className="mt-1 text-[11px] text-slate-500">Play nearby</p></Link>
+          <Link to="/venues" className="rounded-2xl border border-white/10 bg-white/[0.035] p-4 hover:border-cyan-400/30 hover:bg-cyan-400/5"><MapPin size={18} className="text-cyan-300" /><p className="mt-3 text-sm font-bold text-white">Explore</p><p className="mt-1 text-[11px] text-slate-500">Find a venue</p></Link>
+        </div>
+      </section>
+
       {/* ── Dashboard hub cards ─────────────────────── */}
       <div className="space-y-5">
         <div className="rounded-2xl border border-slate-700/60 bg-slate-900/80 backdrop-blur-md p-6 flex items-center gap-5">
