@@ -284,7 +284,7 @@ export default function Navbar() {
 
       <nav className="fixed bottom-3 left-1/2 z-[60] flex w-[calc(100%-1.25rem)] max-w-md -translate-x-1/2 items-center justify-around rounded-2xl border border-white/10 bg-slate-950/90 p-2 shadow-2xl backdrop-blur-xl xl:hidden">
         {[
-          ["/", Home, "Home"], ["/venues", MapPin, "Explore"], ["/games", Gamepad2, "Play"], ["/community", Users, "Community"], [user ? "/profile" : "/login", UserRound, user ? "Profile" : "Sign In"],
+          ["/", Home, "Home"], ["/venues", MapPin, "Explore"], ["/games", Gamepad2, "Play"], ["/hub", Sparkles, "Hub"], [user ? "/profile" : "/login", UserRound, user ? "Profile" : "Sign In"],
         ].map(([path, Icon, label]) => {
           const active = pathname === path || (path !== "/" && pathname.startsWith(path));
           return <Link key={path} to={path} className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-[10px] font-bold transition-all ${active ? "bg-[#10B981]/15 text-[#6EE7B7]" : "text-slate-500 hover:text-white"}`}>
