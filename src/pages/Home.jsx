@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useCart } from "../store/CartContext";
+import { useAuth } from "../store/AuthContext";
 import {
   Search, MapPin, CalendarDays, Trophy, Users, ArrowRight, Star, Activity, Check,
   Zap, Play, ChevronDown, Radio, Sparkles, ShieldCheck, Clock3,
@@ -74,6 +75,7 @@ function FloatingCard({ className, iconWrap, icon, title, sub, onClick }) {
 export default function Home() {
   const navigate = useNavigate();
   const { add } = useCart();
+  const { user } = useAuth();
   const [added, setAdded] = useState("");
   const [query, setQuery] = useState("");
   const [heroQuote, setHeroQuote] = useState(0);
@@ -198,6 +200,38 @@ export default function Home() {
           <button onClick={() => document.getElementById("sports")?.scrollIntoView({ behavior: "smooth" })} className="absolute bottom-4 hidden items-center gap-2 text-[10px] font-bold uppercase tracking-[0.25em] text-slate-500 transition-colors hover:text-white md:flex">
             Scroll to explore <ChevronDown size={14} className="animate-bounce" />
           </button>
+        </div>
+      </section>
+
+      {/* ═════════════════ PERSONALIZED PLAY HUB ═════════════════ */}
+      <section className="relative mx-auto max-w-7xl px-4 pb-10 pt-10 sm:px-6 lg:px-8">
+        <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-[#071C18] via-slate-950 to-[#0A1422] p-6 shadow-2xl md:p-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#10B981]/30 bg-[#10B981]/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-[#6EE7B7]">
+                <Zap size={12} /> ${user ? "Welcome back" : "Your next move"}
+              </div>
+              <h2 className="text-2xl font-black tracking-tight text-white md:text-3xl">${user ? `Good to see you, ${user.name || "Player"}` : "Ready to play?"}</h2>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-400">${user ? "Jump back into your bookings, discover a game, or explore venues around you." : "Find a venue, join a game, and meet players who are ready to play."}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:flex">
+              <button onClick={() => navigate("/games")} className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-[#10B981] px-5 py-3 text-xs font-black text-slate-950 shadow-lg shadow-[#10B981]/15 hover:bg-[#34D399]"><Play size={14} fill="currentColor" /> Find a Game</button>
+              <button onClick={() => navigate("/venues")} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-xs font-bold text-white hover:border-[#10B981]/40 hover:bg-[#10B981]/10"><MapPin size={14} /> Book Venue</button>
+            </div>
+          </div>
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            {[
+              { icon: Radio, title: "PlayConnect Live", text: "Open games happening now", to: "/games", tone: "text-[#10B981] bg-[#10B981]/10" },
+              { icon: MapPin, title: "Near You", text: "Discover venues by distance", to: "/venues", tone: "text-cyan-300 bg-cyan-400/10" },
+              { icon: Trophy, title: "Compete", text: "Events, rankings & rewards", to: "/events", tone: "text-[#FBBF24] bg-[#FBBF24]/10" },
+            ].map(({ icon: Icon, title, text, to, tone }) => (
+              <button key={title} onClick={() => navigate(to)} className="group flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.03] p-4 text-left hover:border-white/15 hover:bg-white/[0.06]">
+                <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${tone}`}><Icon size={18} /></span>
+                <span className="min-w-0"><span className="block text-sm font-bold text-white">{title}</span><span className="mt-0.5 block text-xs text-slate-500">{text}</span></span>
+                <ArrowRight size={15} className="ml-auto shrink-0 text-slate-600 transition-transform group-hover:translate-x-1 group-hover:text-[#10B981]" />
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 
