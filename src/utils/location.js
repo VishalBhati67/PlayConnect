@@ -1,41 +1,60 @@
 const LOCATION_ENDPOINT = "https://api.bigdatacloud.net/data/reverse-geocode-client";
 
-const errorMessage = (error) => {
+const browserLocationError = (error) => {
   if (!error) return "Unable to detect your location.";
-  if (error.code === 1) return "Location permission was denied. Allow location access in your browser settings and try again.";
-  if (error.code === 2) return "Your device could not determine a location. Check GPS/Wi-Fi and try again.";
-  if (error.code === 3) return "Location detection timed out. Please try again.";
-  return "Unable to detect your location. Please try again.";
+  if (error.code === 1) {
+    return "Location access is blocked. In Chrome, set Location to Allow for playconnect-mocha.vercel.app, then press Try Again.";
+  }
+  if (error.code === 2) {
+    return "Your computer could not determine a precise location. Turn on Windows Location Services and Wi-Fi, then press Try Again.";
+  }
+  if (error.code === 3) {
+    return "Location detection timed out. Press Try Again; we will retry with a less strict GPS mode.";
+  }
+  return error.message || "Unable to detect your location. Please try again.";
 };
+
+const requestPosition = (options) =>
+  new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(resolve, reject, options);
+  });
 
 export async function getLiveLocation() {
   if (typeof window === "undefined" || !window.isSecureContext) {
     throw new Error("Live location requires HTTPS. Open the deployed PlayConnect HTTPS site.");
   }
+
   if (!navigator.geolocation) {
     throw new Error("This browser does not support live location.");
   }
 
+  // Do not block the request based on Permissions API state. Chrome can keep a
+  // stale permission state until the page is retried/reloaded, while the
+  // Geolocation API itself is the source of truth.
+  let position;
   try {
-    if (navigator.permissions?.query) {
-      const permission = await navigator.permissions.query({ name: "geolocation" });
-      if (permission.state === "denied") {
-        throw new Error("Location permission is blocked for this site. Allow Location in your browser site settings and try again.");
-      }
-    }
-  } catch (err) {
-    if (err?.message?.includes("permission is blocked")) throw err;
-  }
-
-  const position = await new Promise((resolve, reject) => {
-    navigator.geolocation.getCurrentPosition(resolve, reject, {
+    position = await requestPosition({
       enableHighAccuracy: true,
-      timeout: 15000,
+      timeout: 12000,
       maximumAge: 0,
     });
-  }).catch((err) => {
-    throw new Error(errorMessage(err));
-  });
+  } catch (firstError) {
+    // Desktop Chrome may not have a GPS sensor. Retry using the browser's
+    // normal Wi-Fi/network location provider before giving up.
+    if (firstError?.code === 1) {
+      throw new Error(browserLocationError(firstError));
+    }
+
+    try {
+      position = await requestPosition({
+        enableHighAccuracy: false,
+        timeout: 20000,
+        maximumAge: 30000,
+      });
+    } catch (secondError) {
+      throw new Error(browserLocationError(secondError));
+    }
+  }
 
   const { latitude, longitude, accuracy } = position.coords;
   let place = {};
@@ -58,6 +77,7 @@ export async function getLiveLocation() {
     locality: place.locality || place.city || "",
     region: place.principalSubdivision || "",
     country: place.countryName || "",
+    updatedAt: Date.now(),
   };
 }
 
