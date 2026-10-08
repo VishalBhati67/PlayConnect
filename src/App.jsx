@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { CartProvider } from "./store/CartContext";
 import { AuthProvider, useAuth } from "./store/AuthContext";
@@ -31,14 +31,16 @@ function ProtectedRoute({ children }) {
 
 function AppShell() {
   const { loading } = useAuth();
+  const location = useLocation();
   if (loading) {
     return <div className="min-h-screen bg-[#0B1120] grid place-items-center"><Loader2 size={40} className="animate-spin text-[#10B981]" /></div>;
   }
   return (
     <div className="min-h-screen bg-[#0B1120] text-white flex flex-col antialiased">
       <Navbar />
-      <div className="flex-1">
-        <Routes>
+      <div className="flex-1 route-frame">
+        <div key={location.pathname} className="route-stage">
+          <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/venues" element={<Venues />} />
           <Route path="/events" element={<Events />} />
@@ -57,7 +59,8 @@ function AppShell() {
           <Route path="/dashboard/affiliate" element={<ProtectedRoute><Affiliate /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-        </Routes>
+          </Routes>
+        </div>
       </div>
       <Footer />
     </div>
