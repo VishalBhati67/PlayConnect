@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, onSnapshot, addDoc, query } from "firebase/firestore";
+import { collection, onSnapshot, addDoc, setDoc, doc, query } from "firebase/firestore";
 import { db } from "../firebase";
 import { MapPin, CalendarDays, Users, Loader2, DatabaseZap, Trophy } from "lucide-react";
 
@@ -77,12 +77,36 @@ export default function Events() {
   const [seeding, setSeeding] = useState(false);
   const [city, setCity] = useState("All Cities");
   const [type, setType] = useState("All Types");
+  const syncStarted = useRef(false);
 
   useEffect(() => {
     const q = query(collection(db, "events"));
-    const unsub = onSnapshot(q, (snap) => {
-      setEvents(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    const unsub = onSnapshot(q, async (snap) => {
+      const existing = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setEvents(existing);
       setLoading(false);
+
+      // Migrate the new event catalog into an existing Firebase database.
+      // Only events whose title is missing are added, so refreshes do not duplicate them.
+      if (!syncStarted.current) {
+        syncStarted.current = true;
+        const existingTitles = new Set(existing.map((e) => e.title));
+        const missingEvents = SEED_EVENTS.filter((e) => !existingTitles.has(e.title));
+
+        if (missingEvents.length > 0) {
+          try {
+            await Promise.all(
+              missingEvents.map((event) => {
+                const safeId = `seed-${event.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
+                return setDoc(doc(db, "events", safeId), event, { merge: true });
+              })
+            );
+            console.log(`PlayConnect: added ${missingEvents.length} new events.`);
+          } catch (err) {
+            console.error("Event catalog sync failed:", err);
+          }
+        }
+      }
     }, (err) => {
       console.error("Firestore error:", err);
       setLoading(false);
@@ -97,9 +121,9 @@ export default function Events() {
     finally { setSeeding(false); }
   };
 
-  const list = events.filter(
-    (e) => (city === "All Cities" || e.city === city) && (type === "All Types" || e.types?.includes(type))
-  );
+  const list = events
+    .filter((e) => (city === "All Cities" || e.city === city) && (type === "All Types" || e.types?.includes(type)))
+    .sort((a, b) => new Date(a.date + "T00:00:00") - new Date(b.date + "T00:00:00"));
 
   if (loading) return <div className="min-h-[60vh] flex items-center justify-center"><Loader2 size={40} className="animate-spin text-[#10B981]" /></div>;
 
