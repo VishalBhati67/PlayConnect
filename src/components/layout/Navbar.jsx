@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../../firebase";
-import { Search, ShoppingBag, Menu, X, Bell, Shield } from "lucide-react";
+import { Search, ShoppingBag, Menu, X, Bell, Shield, Home, MapPin, Gamepad2, Users, UserRound } from "lucide-react";
 import { useCart } from "../../store/CartContext";
 import { useAuth } from "../../store/AuthContext";
 import { isUserAdmin } from "../../adminConfig";
@@ -33,6 +33,8 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [bookings, setBookings] = useState([]);
   const [orders, setOrders] = useState([]);
   const { pathname } = useLocation();
@@ -81,6 +83,14 @@ export default function Navbar() {
     setUnread(notifs.filter((n) => (n.at?.toMillis?.() || Date.now()) > seen).length);
   }, [notifs, user]);
 
+  const submitSearch = (e) => {
+    e?.preventDefault();
+    const q = searchQuery.trim();
+    setSearchOpen(false);
+    if (q) navigate(`/venues?search=${encodeURIComponent(q)}`);
+    else navigate("/venues");
+  };
+
   const toggleNotifs = () => {
     if (!user) { navigate("/login"); return; }
     if (!notifOpen) {
@@ -120,7 +130,7 @@ export default function Navbar() {
 
           {/* ── Right Utilities ───────────────────────── */}
           <div className="flex items-center gap-2.5 shrink-0">
-            <button aria-label="Search" className="p-2.5 rounded-full bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-white transition-colors">
+            <button aria-label="Search" onClick={() => setSearchOpen((v) => !v)} className={`p-2.5 rounded-full border text-white transition-all ${searchOpen ? "bg-[#10B981]/15 border-[#10B981]/50 text-[#6EE7B7]" : "bg-slate-800/80 hover:bg-slate-700/80 border-slate-700"}`}>
               <Search size={17} />
             </button>
 
@@ -219,6 +229,16 @@ export default function Navbar() {
         </div>
       </div>
 
+      {searchOpen && (
+        <div className="border-t border-slate-800 bg-[#0B1120]/95 backdrop-blur-xl px-4 py-3">
+          <form onSubmit={submitSearch} className="mx-auto flex max-w-2xl items-center gap-2 rounded-2xl border border-slate-700 bg-slate-950/80 p-1.5 shadow-2xl">
+            <Search size={16} className="ml-3 text-slate-500" />
+            <input autoFocus value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search venues, sports, games..." className="min-w-0 flex-1 bg-transparent px-2 py-2.5 text-sm text-white outline-none placeholder:text-slate-500" />
+            <button type="submit" className="rounded-xl bg-[#10B981] px-4 py-2.5 text-xs font-black text-slate-950 hover:bg-[#34D399]">Search</button>
+          </form>
+        </div>
+      )}
+
       {/* ── Mobile Dropdown ───────────────────────────── */}
       {mobileOpen && (
         <nav className="xl:hidden border-t border-slate-800 bg-[#0B1120]/95 backdrop-blur-md px-4 py-3 grid grid-cols-2 gap-1">
@@ -260,6 +280,18 @@ export default function Navbar() {
           )}
         </nav>
       )}
+
+      <nav className="fixed bottom-3 left-1/2 z-[60] flex w-[calc(100%-1.25rem)] max-w-md -translate-x-1/2 items-center justify-around rounded-2xl border border-white/10 bg-slate-950/90 p-2 shadow-2xl backdrop-blur-xl xl:hidden">
+        {[
+          ["/", Home, "Home"], ["/venues", MapPin, "Explore"], ["/games", Gamepad2, "Play"], ["/community", Users, "Community"], [user ? "/profile" : "/login", UserRound, user ? "Profile" : "Sign In"],
+        ].map(([path, Icon, label]) => {
+          const active = pathname === path || (path !== "/" && pathname.startsWith(path));
+          return <Link key={path} to={path} className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-[10px] font-bold transition-all ${active ? "bg-[#10B981]/15 text-[#6EE7B7]" : "text-slate-500 hover:text-white"}`}>
+            <Icon size={17} />
+            <span>{label}</span>
+          </Link>;
+        })}
+      </nav>
     </header>
   );
 }
