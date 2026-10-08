@@ -8,7 +8,27 @@ const IMG = (id) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=90
 
 /* ✅ Guaranteed fallback if any image ever fails */
 const FALLBACK_IMG = "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=900&q=80";
-const onImgError = (e) => { if (e.currentTarget.src !== FALLBACK_IMG) e.currentTarget.src = FALLBACK_IMG; };
+const SPORT_FALLBACKS = {
+  Cricket: "https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&w=900&q=80",
+  Football: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=900&q=80",
+  Basketball: "https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=900&q=80",
+  Badminton: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=900&q=80",
+  Tennis: "https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&w=900&q=80",
+  Volleyball: "https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?auto=format&fit=crop&w=900&q=80",
+  Boxing: "https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?auto=format&fit=crop&w=900&q=80",
+  Swimming: "https://images.unsplash.com/photo-1530549387789-4c1017266635?auto=format&fit=crop&w=900&q=80",
+  Marathon: "https://images.unsplash.com/photo-1552674605-db764573271e?auto=format&fit=crop&w=900&q=80",
+  Hockey: "https://images.unsplash.com/photo-1526232761682-d26e03ac148e?auto=format&fit=crop&w=900&q=80",
+  "Table Tennis": "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=900&q=80",
+  Baseball: "https://images.unsplash.com/photo-1508344928928-7165b67de128?auto=format&fit=crop&w=900&q=80",
+};
+const getEventImage = (event) => {
+  if (event.img && !event.img.includes("image.qwenlm.ai")) return event.img;
+  return SPORT_FALLBACKS[event.types?.[0]] || FALLBACK_IMG;
+};
+const onImgError = (e) => {
+  if (e.currentTarget.src !== FALLBACK_IMG) e.currentTarget.src = FALLBACK_IMG;
+};
 
 /* ── 12 EVENTS · fresh Oct–Dec 2026 dates · unique working images ── */
 const SEED_EVENTS = [
@@ -110,7 +130,7 @@ export default function Events() {
             <article key={e.id} onClick={() => navigate(`/events/${e.id}`)}
               className="group cursor-pointer overflow-hidden rounded-2xl border border-slate-700/60 bg-slate-900/80 backdrop-blur-md shadow-xl hover:-translate-y-1 hover:border-slate-600 transition-all duration-300">
               <div className="relative h-44 bg-slate-100">
-                <img src={e.img || IMG(e.imgId)} alt={e.title} loading="lazy" onError={onImgError} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <img src={getEventImage(e)} alt={e.title} loading="lazy" onError={onImgError} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent" />
                 <span className={`absolute left-4 top-4 rounded-full px-3 py-1 text-xs font-bold ${status === "Event Over" ? "bg-slate-700 text-slate-300" : status === "Live Today" ? "bg-red-500 text-white animate-pulse" : "bg-[#10B981] text-slate-950"}`}>{status}</span>
                 {e.prizePool > 0 && (
