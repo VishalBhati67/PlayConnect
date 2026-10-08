@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { collection, onSnapshot, addDoc, doc, updateDoc, increment, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
+import { SEED_EVENTS } from "./Events";
 import { useAuth } from "../store/AuthContext";
 import {
   MapPin, CalendarDays, Users, Trophy, IndianRupee, Loader2, CheckCircle2,
@@ -43,7 +44,15 @@ export default function EventDetail() {
       const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       const param = decodeURIComponent(id);
       const found = all.find((v) => v.id === param) || all.find((v) => v.title === param);
+
+      // Fresh catalog events can be displayed before Firestore write permissions
+      // are available. Resolve those local IDs here as well.
+      const localFound = SEED_EVENTS
+        .map((e) => ({ ...e, id: `local-${e.title}` }))
+        .find((v) => v.id === param || v.title === param);
+
       if (found) setEvent(found);
+      else if (localFound) setEvent(localFound);
       else setNotFound(true);
     }, (err) => {
       console.error("Firestore error:", err);
