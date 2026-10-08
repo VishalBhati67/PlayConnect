@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { collection, onSnapshot, addDoc, setDoc, doc, updateDoc, arrayUnion, arrayRemove, query } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../store/AuthContext";
-import { Users, MapPin, CalendarDays, Clock, Plus, X, Check, Trophy, Loader2, LocateFixed, Navigation, DatabaseZap, Search, SlidersHorizontal } from "lucide-react";
+import { Users, MapPin, CalendarDays, Clock, Plus, X, Check, Trophy, Loader2, LocateFixed, Navigation, DatabaseZap, Search, SlidersHorizontal, RefreshCw } from "lucide-react";
+import { getLiveLocation, formatLocationLabel } from "../utils/location";
 
 const SPORT_OPTIONS = [
   { name: "Football", emoji: "⚽" },
@@ -79,6 +80,7 @@ export default function Games() {
   /* ── Location state ─────────────────────────────── */
   const [userLoc, setUserLoc] = useState(null);
   const [locStatus, setLocStatus] = useState("idle");
+  const [locationError, setLocationError] = useState("");
   const [radius, setRadius] = useState(25);
 
   const [form, setForm] = useState({ title: "", sport: "Football", venue: "", city: "", date: "Today", time: "6:00 PM", needed: 10, fee: "" });
@@ -128,18 +130,27 @@ export default function Games() {
   };
 
   /* ── Location Logic ─────────────────────────────── */
-  const enableLocation = () => {
-    if (!navigator.geolocation) { setLocStatus("error"); return; }
+  const enableLocation = async () => {
     setLocStatus("loading");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => { setUserLoc({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setLocStatus("ready"); },
-      () => setLocStatus("error"), { timeout: 8000 }
-    );
+    setLocationError("");
+    try {
+      const location = await getLiveLocation();
+      setUserLoc(location);
+      setLocStatus("ready");
+    } catch (err) {
+      console.error("Live location error:", err);
+      setLocationError(err.message || "Unable to detect your location.");
+      setLocStatus("error");
+    }
   };
-  const disableLocation = () => { setUserLoc(null); setLocStatus("idle"); };
+  const disableLocation = () => { setUserLoc(null); setLocStatus("idle"); setLocationError(""); };
   const pickCity = (cityName) => {
     const c = CITIES.find((x) => x.name === cityName);
-    if (c) { setUserLoc({ lat: c.lat, lng: c.lng }); setLocStatus("ready"); }
+    if (c) {
+      setUserLoc({ lat: c.lat, lng: c.lng, city: c.name, locality: c.name, region: "", accuracy: 0 });
+      setLocationError("");
+      setLocStatus("ready");
+    }
   };
   const locReady = locStatus === "ready" && userLoc;
 
@@ -232,15 +243,15 @@ export default function Games() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h2 className="text-sm font-bold text-white flex items-center gap-2"><Navigation size={15} className="text-[#10B981]" /> Find games near you</h2>
-              <p className="text-xs text-slate-400 mt-1">Enable location to see distances & sort by nearest.</p>
+              <p className="text-xs text-slate-400 mt-1">Use your device GPS to find the nearest games. Your location is only used in your browser for distance sorting.</p>
             </div>
             <button onClick={enableLocation} className="inline-flex items-center gap-2 rounded-full bg-[#10B981] hover:bg-[#059669] px-6 py-2.5 text-sm font-bold text-slate-950 transition-all active:scale-95 shadow-lg shadow-[#10B981]/20"><LocateFixed size={16} /> Use My Location</button>
           </div>
         )}
-        {locStatus === "loading" && <div className="flex items-center gap-3 text-sm text-slate-300"><Loader2 size={18} className="animate-spin text-[#10B981]" /> Detecting your location…</div>}
+        {locStatus === "loading" && <div className="flex items-center gap-3 text-sm text-slate-300"><Loader2 size={18} className="animate-spin text-[#10B981]" /> Getting your live GPS location…</div>}
         {locStatus === "error" && (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <p className="text-sm text-[#FBBF24]">⚠️ Couldn't access your location. Pick your city instead:</p>
+            <p className="text-sm text-[#FBBF24]">⚠️ {locationError || "Couldn't access your location."}</p>
             <select onChange={(e) => pickCity(e.target.value)} defaultValue="" className="rounded-full border border-slate-700 bg-slate-950/60 px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#10B981] cursor-pointer">
               <option value="" disabled>Choose city…</option>
               {CITIES.map((c) => <option key={c.name}>{c.name}</option>)}
@@ -249,12 +260,13 @@ export default function Games() {
         )}
         {locReady && (
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <p className="text-sm font-semibold text-[#10B981] flex items-center gap-2"><MapPin size={15} /> Nearby ON — games sorted by distance</p>
+            <div><p className="text-sm font-semibold text-[#10B981] flex items-center gap-2"><MapPin size={15} /> Live location active</p><p className="mt-1 text-[11px] text-slate-400">{formatLocationLabel(userLoc)}{userLoc.accuracy ? ` · ±${userLoc.accuracy} m` : ""}</p></div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs text-slate-500 mr-1">Radius:</span>
               {RADII.map((r) => (
                 <button key={r} onClick={() => setRadius(r)} className={`rounded-full px-3.5 py-1.5 text-xs font-bold border transition-colors ${radius === r ? "bg-[#10B981] border-[#10B981] text-slate-950" : "bg-slate-800/80 border-slate-700 text-slate-300 hover:bg-slate-700/80"}`}>{r === "All" ? "All" : `${r} km`}</button>
               ))}
+              <button onClick={enableLocation} className="inline-flex items-center gap-1 rounded-full border border-[#10B981]/40 bg-[#10B981]/10 px-3.5 py-1.5 text-xs font-semibold text-[#6EE7B7] hover:bg-[#10B981]/20 transition-colors"><RefreshCw size={12} /> Refresh</button>
               <button onClick={disableLocation} className="ml-2 inline-flex items-center gap-1 rounded-full border border-slate-700 px-3.5 py-1.5 text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-700/80 transition-colors"><X size={12} /> Off</button>
             </div>
           </div>
