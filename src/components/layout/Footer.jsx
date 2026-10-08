@@ -44,7 +44,7 @@ export default function Footer() {
         <div className="col-span-2 space-y-4">
           <Link to="/" className="flex items-center shrink-0">
             <img
-              src="public/assets/playconnect-logo.png"
+              src="/assets/playconnect-logo.png"
               alt="PlayConnect"
               className="h-10 w-auto object-contain"
             />
