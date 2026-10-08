@@ -6,20 +6,7 @@ import {
   Zap, Play, ChevronDown, Radio, Sparkles, ShieldCheck, Clock3,
 } from "lucide-react";
 
-const HERO_VIDEOS = [
-  {
-    src: "https://huggingface.co/spaces/allenai/MolmoPoint-8B-Demo/resolve/main/example-videos/sports.mp4?download=true",
-    label: "MULTI-SPORT",
-  },
-  {
-    src: "https://github.com/THUDM/CogVLM2/raw/main/resources/videos/basketball.mp4",
-    label: "BASKETBALL",
-  },
-  {
-    src: "https://huggingface.co/datasets/hf-internal-testing/fixtures_videos/resolve/main/tennis.mp4?download=true",
-    label: "TENNIS",
-  },
-];
+const HERO_VIDEO = "/assets/playconnect-hero.mp4";
 
 const HERO_QUOTES = [
   "Don't wait for motivation. Create it.",
@@ -89,20 +76,12 @@ export default function Home() {
   const { add } = useCart();
   const [added, setAdded] = useState("");
   const [query, setQuery] = useState("");
-  const [heroVideo, setHeroVideo] = useState(0);
   const [heroQuote, setHeroQuote] = useState(0);
   const [videoFailed, setVideoFailed] = useState(false);
 
   useEffect(() => {
-    const videoTimer = setInterval(() => {
-      setVideoFailed(false);
-      setHeroVideo((v) => (v + 1) % HERO_VIDEOS.length);
-    }, 9000);
     const quoteTimer = setInterval(() => setHeroQuote((q) => (q + 1) % HERO_QUOTES.length), 3300);
-    return () => {
-      clearInterval(videoTimer);
-      clearInterval(quoteTimer);
-    };
+    return () => clearInterval(quoteTimer);
   }, []);
 
   const addToCart = (p) => {
@@ -124,20 +103,17 @@ export default function Home() {
 
         <div className="absolute inset-0 -z-20" aria-hidden="true">
           <video
-            key={HERO_VIDEOS[heroVideo].src}
-            onError={() => {
-              setVideoFailed(true);
-              setHeroVideo((v) => (v + 1) % HERO_VIDEOS.length);
-            }}
             autoPlay
             muted
             loop
             playsInline
-            preload="metadata"
+            preload="auto"
             poster={SPORTS[0].img}
-            className="h-full w-full object-cover opacity-55 saturate-[0.92] contrast-[1.12] brightness-[0.72] transition-opacity duration-1000"
+            onError={() => setVideoFailed(true)}
+            className="hero-video h-full w-full object-cover opacity-60 saturate-[0.94] contrast-[1.08] brightness-[0.68] transition-opacity duration-1000"
+            aria-hidden="true"
           >
-            <source src={HERO_VIDEOS[heroVideo].src} type="video/mp4" />
+            <source src={HERO_VIDEO} type="video/mp4" />
           </video>
           {videoFailed && (
             <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=1800&q=85')] bg-cover bg-center" />
