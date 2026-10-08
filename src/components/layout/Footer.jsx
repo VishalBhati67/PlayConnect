@@ -54,14 +54,14 @@ export default function Footer() {
           </p>
           <div className="flex gap-2.5">
             {[InstagramIcon, FacebookIcon, XIcon].map((Icon, i) => (
-              <a
+              <span
                 key={i}
-                href="#"
-                aria-label="Social link"
-                className="p-2.5 rounded-full bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-300 hover:text-white transition-colors"
+                title="Social profile coming soon"
+                aria-label="Social profile coming soon"
+                className="p-2.5 rounded-full bg-slate-800/80 border border-slate-700 text-slate-500 cursor-default"
               >
                 <Icon size={15} />
-              </a>
+              </span>
             ))}
           </div>
         </div>
