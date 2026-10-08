@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, onSnapshot, addDoc, setDoc, doc, query } from "firebase/firestore";
 import { db } from "../firebase";
-import { MapPin, CalendarDays, Users, Loader2, DatabaseZap, Trophy } from "lucide-react";
+import { MapPin, CalendarDays, Users, Loader2, DatabaseZap, Trophy, Search } from "lucide-react";
 
 const IMG = (id) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=900&q=60`;
 
@@ -77,6 +77,7 @@ export default function Events() {
   const [seeding, setSeeding] = useState(false);
   const [city, setCity] = useState("All Cities");
   const [type, setType] = useState("All Types");
+  const [searchQuery, setSearchQuery] = useState("");
   const syncStarted = useRef(false);
 
   useEffect(() => {
@@ -127,7 +128,10 @@ export default function Events() {
   };
 
   const list = events
-    .filter((e) => (city === "All Cities" || e.city === city) && (type === "All Types" || e.types?.includes(type)))
+    .filter((e) => {
+      const q = searchQuery.trim().toLowerCase();
+      return (city === "All Cities" || e.city === city) && (type === "All Types" || e.types?.includes(type)) && (!q || [e.title, e.venue, e.city, ...(e.types || [])].some((v) => String(v).toLowerCase().includes(q)));
+    })
     .sort((a, b) => new Date(a.date + "T00:00:00") - new Date(b.date + "T00:00:00"));
 
   if (loading) return <div className="min-h-[60vh] flex items-center justify-center"><Loader2 size={40} className="animate-spin text-[#10B981]" /></div>;
@@ -137,6 +141,17 @@ export default function Events() {
       <div className="mb-8">
         <h1 className="text-3xl font-black text-white">🏟️ Events & <span className="text-[#FBBF24]">Tournaments</span></h1>
         <p className="text-slate-400 text-sm mt-1">Register for marathons, leagues and opens near you — Oct to Dec 2026 season.</p>
+      </div>
+
+      <div className="mb-5 grid gap-3 sm:grid-cols-3">
+        <div className="sm:col-span-2 flex items-center gap-2 rounded-2xl border border-slate-700 bg-slate-900/80 px-4 py-3 focus-within:border-[#10B981]/60">
+          <Search size={16} className="text-slate-500" /><input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search tournaments, sports, venues..." className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-slate-500" />
+        </div>
+        <div className="grid grid-cols-3 gap-2 rounded-2xl border border-slate-700 bg-slate-900/80 p-3 text-center">
+          <div><p className="text-lg font-black text-white">{events.filter(e => statusOf(e) === "Upcoming").length}</p><p className="text-[9px] uppercase tracking-wider text-slate-500">Upcoming</p></div>
+          <div><p className="text-lg font-black text-[#FBBF24]">{events.reduce((s,e)=>s+(e.prizePool||0),0).toLocaleString("en-IN")}</p><p className="text-[9px] uppercase tracking-wider text-slate-500">Prize Pool</p></div>
+          <div><p className="text-lg font-black text-[#10B981]">{events.reduce((s,e)=>s+(e.capacity||0),0).toLocaleString("en-IN")}</p><p className="text-[9px] uppercase tracking-wider text-slate-500">Seats</p></div>
+        </div>
       </div>
 
       {/* Filters */}
