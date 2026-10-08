@@ -1,1 +1,74 @@
 @import "tailwindcss";
+
+@keyframes float {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -10px, 0); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { transform: translate(-50%, 0) scale(0.96); opacity: .45; }
+  50% { transform: translate(-50%, 0) scale(1.04); opacity: .8; }
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.hero-grid {
+  background-image:
+    linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+  background-size: 54px 54px;
+  mask-image: linear-gradient(to bottom, transparent, black 18%, black 75%, transparent);
+}
+
+.hero-enter {
+  animation: heroEnter .8s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.hero-enter-delay {
+  animation: heroEnter .8s .08s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.hero-enter-delay-2 {
+  animation: heroEnter .8s .18s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.hero-enter-delay-3 {
+  animation: heroEnter .8s .28s cubic-bezier(.2,.8,.2,1) both;
+}
+
+@keyframes heroEnter {
+  from { opacity: 0; transform: translateY(18px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.sport-marquee {
+  animation: marquee 32s linear infinite;
+}
+
+.sport-marquee:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-enter,
+  .hero-enter-delay,
+  .hero-enter-delay-2,
+  .hero-enter-delay-3,
+  .sport-marquee {
+    animation: none !important;
+  }
+
+  .hero-grid {
+    opacity: .18;
+  }
+}
+
+
+.hero-video { object-position: center center; }
+
+@media (max-width: 767px) {
+  .hero-video { object-position: center center; }
+}
