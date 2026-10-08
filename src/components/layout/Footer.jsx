@@ -32,7 +32,7 @@ const COLUMNS = [
   },
   {
     title: "Legal",
-    links: [["Privacy Policy", "#"], ["Terms of Service", "#"]],
+    links: [["Privacy Policy", "/privacy"], ["Terms of Service", "/terms"]],
   },
 ];
 
