@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { collection, onSnapshot, addDoc, setDoc, doc, updateDoc, arrayUnion, arrayRemove, query } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../store/AuthContext";
-import { Users, MapPin, CalendarDays, Clock, Plus, X, Check, Trophy, Loader2, LocateFixed, Navigation, DatabaseZap } from "lucide-react";
+import { Users, MapPin, CalendarDays, Clock, Plus, X, Check, Trophy, Loader2, LocateFixed, Navigation, DatabaseZap, Search, SlidersHorizontal } from "lucide-react";
 
 const SPORT_OPTIONS = [
   { name: "Football", emoji: "⚽" },
@@ -71,6 +71,9 @@ export default function Games() {
   const [seeding, setSeeding] = useState(false);
   const syncStarted = useRef(false);
   const [filter, setFilter] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [openOnly, setOpenOnly] = useState(false);
+  const [sortBy, setSortBy] = useState("recommended");
   const [showForm, setShowForm] = useState(false);
 
   /* ── Location state ─────────────────────────────── */
@@ -188,12 +191,21 @@ export default function Games() {
   };
 
   /* ── Filter + distance sort ─────────────────────── */
-  let list = games.filter((g) => filter === "All" || g.sport === filter);
+  let list = games.filter((g) => {
+    const q = searchQuery.trim().toLowerCase();
+    const matchesSport = filter === "All" || g.sport === filter;
+    const matchesSearch = !q || [g.title, g.venue, g.city, g.sport].some((v) => String(v || "").toLowerCase().includes(q));
+    const matchesOpen = !openOnly || statusOf(g) !== "Full";
+    return matchesSport && matchesSearch && matchesOpen;
+  });
   if (locReady) {
     list = list.map((g) => ({ ...g, distance: distanceKm(userLoc, g) }));
     if (radius !== "All") list = list.filter((g) => g.distance <= radius);
     list = [...list].sort((a, b) => a.distance - b.distance);
   }
+  if (sortBy === "soonest") list = [...list].sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.time).localeCompare(String(b.time)));
+  if (sortBy === "spots") list = [...list].sort((a, b) => (b.needed - (b.joinedBy?.length || 0)) - (a.needed - (a.joinedBy?.length || 0)));
+
   const openCount = games.filter((g) => statusOf(g) !== "Full").length;
   const inputCls = "mt-1.5 w-full rounded-xl border border-slate-700 bg-slate-950/60 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#10B981]";
 
@@ -263,6 +275,24 @@ export default function Games() {
           <div className="sm:col-span-2 lg:col-span-4 flex justify-end"><button type="submit" disabled={!form.title.trim() || !form.venue.trim()} className="rounded-full bg-[#10B981] hover:bg-[#059669] disabled:opacity-40 px-8 py-3 text-sm font-bold text-slate-950 transition-all active:scale-95 shadow-lg shadow-[#10B981]/20">🚀 Publish Game</button></div>
         </form>
       )}
+
+      {/* ── Smart discovery toolbar ─────────────────── */}
+      <div className="mb-6 rounded-2xl border border-white/10 bg-slate-900/70 p-3 shadow-xl backdrop-blur-md">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <div className="flex flex-1 items-center gap-2 rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2.5 focus-within:border-[#10B981]/60">
+            <Search size={16} className="text-slate-500" />
+            <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by game, venue, city or sport..." className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-slate-500" />
+            {searchQuery && <button type="button" onClick={() => setSearchQuery("")} className="text-slate-500 hover:text-white"><X size={15} /></button>}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => setOpenOnly((v) => !v)} className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-xs font-bold transition-all ${openOnly ? "border-[#10B981] bg-[#10B981]/15 text-[#6EE7B7]" : "border-slate-700 bg-slate-950/60 text-slate-400 hover:text-white"}`}><SlidersHorizontal size={14} /> Open slots only</button>
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="rounded-xl border border-slate-700 bg-slate-950/70 px-3.5 py-2.5 text-xs font-bold text-slate-300 outline-none focus:border-[#10B981]">
+              <option value="recommended">Recommended</option><option value="soonest">Soonest</option><option value="spots">Most slots</option>
+            </select>
+          </div>
+        </div>
+        <div className="mt-3 flex items-center gap-2 text-[11px] text-slate-500"><span className="h-1.5 w-1.5 rounded-full bg-[#10B981]" /> {list.length} games match your filters</div>
+      </div>
 
       {/* ── Sport filter pills ─────────────────────── */}
       <div className="flex flex-wrap gap-2 mb-8">
