@@ -28,7 +28,7 @@ const COLUMNS = [
   },
   {
     title: "Company",
-    links: [["Sponsors", "/sponsors"], ["Community", "/community"], ["Affiliate Program", "/sponsors"], ["Dashboard", "/dashboard"]],
+    links: [["Sponsors", "/sponsors"], ["Community", "/community"], ["Sports Hub", "/hub"], ["Affiliate Program", "/sponsors"], ["Dashboard", "/dashboard"]],
   },
   {
     title: "Legal",
