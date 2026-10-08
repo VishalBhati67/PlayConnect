@@ -72,3 +72,22 @@
 @media (max-width: 767px) {
   .hero-video { object-position: center center; }
 }
+
+
+/* Global PlayConnect motion system */
+.route-frame{position:relative;isolation:isolate;overflow:clip}
+.route-frame::before{content:"";position:fixed;inset:72px 0 0;pointer-events:none;z-index:-1;background:radial-gradient(circle at 12% 18%,rgba(16,185,129,.075),transparent 28%),radial-gradient(circle at 88% 72%,rgba(245,158,11,.055),transparent 30%);animation:ambientDrift 12s ease-in-out infinite alternate}
+.route-stage{min-height:100%;animation:pageEnter .72s cubic-bezier(.2,.8,.2,1) both;transform-origin:50% 0}
+.route-stage main>section,.route-stage main>.section,.route-stage main>div:not(.pointer-events-none){animation:contentRise .65s cubic-bezier(.2,.8,.2,1) both}
+.route-stage main>*:nth-child(2){animation-delay:.06s}.route-stage main>*:nth-child(3){animation-delay:.12s}.route-stage main>*:nth-child(4){animation-delay:.18s}.route-stage main>*:nth-child(5){animation-delay:.24s}.route-stage main>*:nth-child(6){animation-delay:.30s}
+.route-stage a,.route-stage button{transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s ease,border-color .22s ease,background-color .22s ease,color .22s ease,opacity .22s ease}
+.route-stage button:hover:not(:disabled),.route-stage a:hover{transform:translateY(-2px)}
+.route-stage button:active:not(:disabled),.route-stage a:active{transform:translateY(0) scale(.985)}
+.route-stage input,.route-stage textarea,.route-stage select{transition:border-color .2s ease,box-shadow .2s ease,background-color .2s ease}
+.route-stage input:focus,.route-stage textarea:focus,.route-stage select:focus{box-shadow:0 0 0 3px rgba(16,185,129,.10),0 0 24px rgba(16,185,129,.07)}
+.route-stage img{transition:transform .55s cubic-bezier(.2,.8,.2,1),filter .35s ease,opacity .35s ease}
+.route-stage img:hover{filter:saturate(1.06)}
+@keyframes pageEnter{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes contentRise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes ambientDrift{from{transform:translate3d(-1%,-1%,0) scale(1);opacity:.72}to{transform:translate3d(1%,1%,0) scale(1.04);opacity:1}}
+@media (prefers-reduced-motion:reduce){.route-stage,.route-stage main>*,.route-frame::before{animation:none!important}.route-stage a,.route-stage button,.route-stage img{transition:none!important}}
