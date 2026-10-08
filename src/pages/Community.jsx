@@ -203,7 +203,7 @@ export default function Community() {
               <option value="" disabled>Choose city…</option>
               {CITIES.map((c) => <option key={c.name}>{c.name}</option>)}
             </select>
-          </div>
+          </div></div>
         )}
 
         {locReady && (
