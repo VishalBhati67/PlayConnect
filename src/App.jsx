@@ -21,6 +21,7 @@ import Affiliate from "./pages/Affiliate";
 import Legal from "./pages/Legal";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
+import PlayHub from "./pages/PlayHub";
 
 
 function ProtectedRoute({ children }) {
@@ -49,6 +50,7 @@ function AppShell() {
           <Route path="/shop" element={<Shop />} />
           <Route path="/sponsors" element={<Sponsors />} />
           <Route path="/community" element={<Community />} />
+          <Route path="/hub" element={<PlayHub />} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/login" element={<Login />} />
           <Route path="/privacy" element={<Legal type="privacy" />} />
