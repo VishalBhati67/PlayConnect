@@ -21,6 +21,7 @@ import Affiliate from "./pages/Affiliate";
 import Legal from "./pages/Legal";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
+import GameDetail from "./pages/GameDetail";
 import PlayHub from "./pages/PlayHub";
 
 
@@ -47,6 +48,7 @@ function AppShell() {
           <Route path="/venues" element={<Venues />} />
           <Route path="/events" element={<Events />} />
           <Route path="/games" element={<Games />} />
+          <Route path="/games/:id" element={<GameDetail />} />
           <Route path="/shop" element={<Shop />} />
           <Route path="/sponsors" element={<Sponsors />} />
           <Route path="/community" element={<Community />} />
