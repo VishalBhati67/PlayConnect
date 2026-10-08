@@ -392,9 +392,12 @@ export default function Games() {
 
               <div className="flex items-center justify-between pt-1 border-t border-slate-700/50">
                 <p className="text-sm font-bold text-[#FBBF24]">{g.fee}{g.fee !== "Free" && <span className="text-[10px] text-slate-500 font-medium"> /player</span>}</p>
-                <button onClick={() => toggleJoin(g)} disabled={full} className={`inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-bold transition-all active:scale-95 ${joined ? "bg-[#10B981]/15 border border-[#10B981]/50 text-[#10B981]" : full ? "bg-slate-700 text-slate-400 cursor-not-allowed" : "bg-[#10B981] hover:bg-[#059669] text-slate-950 shadow-lg shadow-[#10B981]/20"}`}>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => navigate(`/games/${encodeURIComponent(g.id)}`)} className="rounded-full border border-slate-700 px-4 py-2 text-xs font-bold text-slate-300 hover:text-white hover:border-[#10B981]/40">View Game</button>
+                  <button onClick={() => toggleJoin(g)} disabled={full} className={`inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-bold transition-all active:scale-95 ${joined ? "bg-[#10B981]/15 border border-[#10B981]/50 text-[#10B981]" : full ? "bg-slate-700 text-slate-400 cursor-not-allowed" : "bg-[#10B981] hover:bg-[#059669] text-slate-950 shadow-lg shadow-[#10B981]/20"}`}>
                   {joined ? (<><Check size={13} /> Joined — Leave</>) : status === "Full" ? "Full" : "Join Game"}
-                </button>
+                  </button>
+                </div>
               </div>
             </article>
           );
