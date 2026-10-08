@@ -7,11 +7,18 @@ import {
 } from "lucide-react";
 
 const HERO_VIDEOS = [
-  { src: "https://cdn.coverr.co/videos/coverr-athletics-field-msqikb5u2s/1080p.mp4", label: "ATHLETICS" },
-  { src: "https://cdn.coverr.co/videos/coverr-basketball-court-in-auckland-new-zealand-pst3mk42mi/1080p.mp4", label: "BASKETBALL" },
-  { src: "https://cdn.coverr.co/videos/coverr-two-friends-playing-tennis-a3n4yfaz53/1080p.mp4", label: "TENNIS" },
-  { src: "https://cdn.coverr.co/videos/coverr-boxing-at-the-gym-l0egelzhoj/1080p.mp4", label: "BOXING" },
-  { src: "https://cdn.coverr.co/videos/coverr-man-jogging-on-the-beach-tomt9atzxy/1080p.mp4", label: "RUNNING" },
+  {
+    src: "https://huggingface.co/spaces/allenai/MolmoPoint-8B-Demo/resolve/main/example-videos/sports.mp4?download=true",
+    label: "MULTI-SPORT",
+  },
+  {
+    src: "https://github.com/THUDM/CogVLM2/raw/main/resources/videos/basketball.mp4",
+    label: "BASKETBALL",
+  },
+  {
+    src: "https://huggingface.co/datasets/hf-internal-testing/fixtures_videos/resolve/main/tennis.mp4?download=true",
+    label: "TENNIS",
+  },
 ];
 
 const HERO_QUOTES = [
@@ -84,9 +91,13 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [heroVideo, setHeroVideo] = useState(0);
   const [heroQuote, setHeroQuote] = useState(0);
+  const [videoFailed, setVideoFailed] = useState(false);
 
   useEffect(() => {
-    const videoTimer = setInterval(() => setHeroVideo((v) => (v + 1) % HERO_VIDEOS.length), 6500);
+    const videoTimer = setInterval(() => {
+      setVideoFailed(false);
+      setHeroVideo((v) => (v + 1) % HERO_VIDEOS.length);
+    }, 9000);
     const quoteTimer = setInterval(() => setHeroQuote((q) => (q + 1) % HERO_QUOTES.length), 3300);
     return () => {
       clearInterval(videoTimer);
@@ -114,6 +125,10 @@ export default function Home() {
         <div className="absolute inset-0 -z-20" aria-hidden="true">
           <video
             key={HERO_VIDEOS[heroVideo].src}
+            onError={() => {
+              setVideoFailed(true);
+              setHeroVideo((v) => (v + 1) % HERO_VIDEOS.length);
+            }}
             autoPlay
             muted
             loop
@@ -124,6 +139,9 @@ export default function Home() {
           >
             <source src={HERO_VIDEOS[heroVideo].src} type="video/mp4" />
           </video>
+          {videoFailed && (
+            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=1800&q=85')] bg-cover bg-center" />
+          )}
           <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,7,18,0.88)_0%,rgba(3,7,18,0.48)_42%,rgba(3,7,18,0.28)_72%,rgba(3,7,18,0.62)_100%)]" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_52%_42%,rgba(16,185,129,0.20),transparent_36%),linear-gradient(180deg,rgba(3,7,18,0.15)_0%,rgba(3,7,18,0.28)_55%,#050A14_100%)]" />
         </div>
