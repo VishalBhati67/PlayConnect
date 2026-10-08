@@ -14,9 +14,12 @@ export function AuthProvider({ children }) {
       if (firebaseUser) {
         const ref = doc(db, "users", firebaseUser.uid);
         const snap = await getDoc(ref);
+        const existingProfile = snap.exists() ? snap.data() : {};
+        const googleName = firebaseUser.displayName?.trim();
+
         if (!snap.exists()) {
           await setDoc(ref, {
-            name: firebaseUser.displayName || "New Player",
+            name: googleName || "New Player",
             email: firebaseUser.email || "",
             phone: firebaseUser.phoneNumber || "",
             photoURL: firebaseUser.photoURL || "",
@@ -26,7 +29,15 @@ export function AuthProvider({ children }) {
             tier: "Bronze",
             createdAt: new Date().toISOString(),
           });
+        } else if (googleName && (!existingProfile.name || existingProfile.name === "New Player")) {
+          // Sync the Google account name into the PlayConnect profile.
+          await setDoc(ref, {
+            name: googleName,
+            email: firebaseUser.email || existingProfile.email || "",
+            photoURL: firebaseUser.photoURL || existingProfile.photoURL || "",
+          }, { merge: true });
         }
+
         const profile = (await getDoc(ref)).data();
         setUser({ uid: firebaseUser.uid, ...profile });
       } else {
