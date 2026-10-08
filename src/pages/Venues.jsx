@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { collection, onSnapshot, addDoc, query } from "firebase/firestore";
+import { collection, onSnapshot, addDoc, query, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
+import { useAuth } from "../store/AuthContext";
 import { MapPin, Star, Search, Loader2, LocateFixed, Navigation, X, DatabaseZap } from "lucide-react";
 
 const IMG = (id) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=900&q=60`;
@@ -20,7 +21,7 @@ const CITIES = [
   { name: "Mumbai", lat: 19.076, lng: 72.8777 },
 ];
 
-/* ── 18 VENUES · 11 SPORTS · unique image each ────────────────── */
+/* ── 18 VENUES · 11 SPORTS · unique image each ───────────────── */
 const SEED_VENUES = [
   { name: "The South PickleBall Arena", address: "Sitapura, Jaipur", sports: ["Pickleball"], price: 550, rating: 4.9, reviews: 28, badge: "Featured", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/26d3930e4-f1fd-4535-ae9d-3790a53d96e71720.png", lat: 26.852, lng: 75.803 },
   { name: "PaddleX | The Pickleball Club", address: "Mansarovar, Jaipur", sports: ["Pickleball"], price: 800, rating: 4.3, reviews: 26, badge: "Featured", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/26d3930e4-f1fd-4535-ae9d-3790a53d96e77519.png", lat: 26.8656, lng: 75.8064 },
@@ -31,7 +32,7 @@ const SEED_VENUES = [
   { name: "Marine Drive Basketball Court", address: "Marine Drive, Mumbai", sports: ["Basketball"], price: 700, rating: 4.6, reviews: 98, badge: "Verified", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/76d3930e4-f1fd-4535-ae9d-3790a53d96e75581.png", lat: 18.9426, lng: 72.8235 },
   { name: "Andheri Sports Turf", address: "Andheri East, Mumbai", sports: ["Football", "Cricket"], price: 1200, rating: 4.5, reviews: 210, badge: "Featured", img: "https://images.unsplash.com/photo-1575361204480-aadea25e6e68?w=900&q=60", lat: 19.1197, lng: 72.8464 },
   { name: "Powai Pickleball Hub", address: "Powai, Mumbai", sports: ["Pickleball"], price: 650, rating: 4.7, reviews: 64, badge: "New", img: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=900&q=60", lat: 19.1176, lng: 72.906 },
-  /* 🥊 BOXING */
+  /*  BOXING */
   { name: "Knockout Boxing Academy", address: "Andheri West, Mumbai", sports: ["Boxing"], price: 900, rating: 4.8, reviews: 122, badge: "Verified", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/16d3930e4-f1fd-4535-ae9d-3790a53d96e73156.png", lat: 19.1358, lng: 72.8265 },
   { name: "Capital Boxing Hub", address: "Karol Bagh, Delhi", sports: ["Boxing"], price: 750, rating: 4.5, reviews: 87, badge: "Featured", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/26d3930e4-f1fd-4535-ae9d-3790a53d96e771766.png", lat: 28.652, lng: 77.19 },
   { name: "Champion Boxing & Fitness", address: "Indirapuram, Ghaziabad", sports: ["Boxing"], price: 600, rating: 4.3, reviews: 54, badge: "New", img: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=900&q=60", lat: 28.644, lng: 77.371 },
@@ -40,7 +41,7 @@ const SEED_VENUES = [
   { name: "Wave Riders Olympic Pool", address: "Bandra West, Mumbai", sports: ["Swimming"], price: 500, rating: 4.7, reviews: 96, badge: "Featured", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/36d3930e4-f1fd-4535-ae9d-3790a53d96e77334.png", lat: 19.0596, lng: 72.8295 },
   /* 🏐 VOLLEYBALL */
   { name: "Smash Vault Volleyball Arena", address: "Saket, New Delhi", sports: ["Volleyball"], price: 600, rating: 4.4, reviews: 71, badge: "Verified", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/26d3930e4-f1fd-4535-ae9d-3790a53d96e76807.png", lat: 28.5245, lng: 77.2135 },
-  /* 🏓 TABLE TENNIS */
+  /*  TABLE TENNIS */
   { name: "Spin City Table Tennis Club", address: "Vastrapur, Ahmedabad", sports: ["Table Tennis"], price: 350, rating: 4.6, reviews: 88, badge: "Verified", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/26d3930e4-f1fd-4535-ae9d-3790a53d96e74645.png", lat: 23.0265, lng: 72.5265 },
   /* 🏑 HOCKEY */
   { name: "Turfside Hockey Ground", address: "Sanganer, Jaipur", sports: ["Hockey"], price: 800, rating: 4.5, reviews: 39, badge: "New", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/36d3930e4-f1fd-4535-ae9d-3790a53d96e75241.png", lat: 26.815, lng: 75.79 },
@@ -69,10 +70,13 @@ const formatDist = (km) => (km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixe
 export default function Venues() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
+  const { user } = useAuth();
 
   const [venues, setVenues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [vform, setVform] = useState({ name: "", address: "", city: "Jaipur", sports: "", price: "" });
 
   const initialSport = params.get("sport");
   const [filter, setFilter] = useState(initialSport && FILTERS.includes(initialSport) ? initialSport : "All");
@@ -98,6 +102,34 @@ export default function Venues() {
     finally { setSeeding(false); }
   };
 
+  const handleVenueSubmit = async (e) => {
+    e.preventDefault();
+    const c = CITIES.find((x) => x.name === vform.city) || CITIES[1];
+    try {
+      await addDoc(collection(db, "venues"), {
+        name: vform.name,
+        address: vform.address,
+        city: vform.city,
+        sports: vform.sports.split(",").map((s) => s.trim()).filter(Boolean),
+        price: Number(vform.price),
+        rating: null,
+        reviews: 0,
+        badge: "New",
+        img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/7ba46c23-1a46-405f-9758-03c7b91340ca",
+        lat: c.lat,
+        lng: c.lng,
+        status: "Pending",
+        ownerId: user?.uid || "",
+        ownerName: user?.name || "Venue Owner",
+        createdAt: serverTimestamp(),
+      });
+      setVform({ name: "", address: "", city: "Jaipur", sports: "", price: "" });
+      setShowForm(false);
+    } catch (err) {
+      console.error("Venue submit error:", err);
+    }
+  };
+
   const enableLocation = () => {
     if (!navigator.geolocation) { setLocStatus("error"); return; }
     setLocStatus("loading");
@@ -114,7 +146,9 @@ export default function Venues() {
   const locReady = locStatus === "ready" && userLoc;
 
   let list = venues.filter(
-    (v) => (filter === "All" || v.sports?.includes(filter)) && v.name?.toLowerCase().includes(searchQuery.toLowerCase())
+    (v) => v.status !== "Pending" && v.status !== "Rejected" &&
+    (filter === "All" || v.sports?.includes(filter)) &&
+    v.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
   if (locReady) {
     list = list.map((v) => ({ ...v, distance: distanceKm(userLoc, v) }));
@@ -131,11 +165,31 @@ export default function Venues() {
           <h1 className="text-3xl font-black text-white">📍 Trending Venues {locReady && <span className="text-[#10B981] text-xl font-bold">· Near You</span>}</h1>
           <p className="text-slate-400 text-sm mt-1">{locReady ? "Sorted by distance from your location." : "Discover & book turfs, courts, pools and arenas near you."}</p>
         </div>
-        <div className="flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900/80 px-4 py-2.5 w-full md:w-72 focus-within:border-[#10B981]/60">
-          <Search size={16} className="text-slate-500 shrink-0" />
-          <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search venues..." className="flex-1 bg-transparent text-sm text-white placeholder-slate-500 focus:outline-none" />
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900/80 px-4 py-2.5 w-full md:w-72 focus-within:border-[#10B981]/60">
+            <Search size={16} className="text-slate-500 shrink-0" />
+            <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search venues..." className="flex-1 bg-transparent text-sm text-white placeholder-slate-500 focus:outline-none" />
+          </div>
+          <button onClick={() => setShowForm((v) => !v)} className="rounded-full border border-[#10B981] bg-[#10B981]/10 hover:bg-[#10B981]/20 px-4 py-2.5 text-sm font-bold text-[#10B981] transition-all active:scale-95 whitespace-nowrap">
+            📍 List Your Venue
+          </button>
         </div>
       </div>
+
+      {showForm && (
+        <form onSubmit={handleVenueSubmit} className="mb-8 rounded-2xl border border-[#FBBF24]/40 bg-slate-900/80 p-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <input required value={vform.name} onChange={(e) => setVform({ ...vform, name: e.target.value })} placeholder="Venue Name" className="rounded-xl border border-slate-700 bg-slate-950/60 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#FBBF24]" />
+          <input required value={vform.address} onChange={(e) => setVform({ ...vform, address: e.target.value })} placeholder="Address" className="rounded-xl border border-slate-700 bg-slate-950/60 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#FBBF24]" />
+          <select value={vform.city} onChange={(e) => setVform({ ...vform, city: e.target.value })} className="rounded-xl border border-slate-700 bg-slate-950/60 px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#FBBF24] cursor-pointer">
+            {CITIES.map((c) => <option key={c.name}>{c.name}</option>)}
+          </select>
+          <input required value={vform.sports} onChange={(e) => setVform({ ...vform, sports: e.target.value })} placeholder="Sports (comma separated)" className="rounded-xl border border-slate-700 bg-slate-950/60 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#FBBF24]" />
+          <input required type="number" value={vform.price} onChange={(e) => setVform({ ...vform, price: e.target.value })} placeholder="Price per hour" className="rounded-xl border border-slate-700 bg-slate-950/60 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#FBBF24]" />
+          <button type="submit" className="sm:col-span-2 lg:col-span-5 rounded-full bg-[#FBBF24] hover:bg-[#F59E0B] px-6 py-2.5 text-sm font-bold text-slate-950 transition-all active:scale-95">
+            📝 Submit for Approval
+          </button>
+        </form>
+      )}
 
       {/* LOCATION BAR */}
       <div className="mb-8 rounded-2xl border border-slate-700/60 bg-slate-900/80 backdrop-blur-md p-5">

@@ -6,17 +6,29 @@ import { MapPin, CalendarDays, Users, Loader2, DatabaseZap, Trophy } from "lucid
 
 const IMG = (id) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=900&q=60`;
 
+/* ✅ Guaranteed fallback if any image ever fails */
+const FALLBACK_IMG = "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/06d3930e4-f1fd-4535-ae9d-3790a53d96e75167.png";
+const onImgError = (e) => { if (e.currentTarget.src !== FALLBACK_IMG) e.currentTarget.src = FALLBACK_IMG; };
+
+/* ── 12 EVENTS · fresh Oct–Dec 2026 dates · unique working images ── */
 const SEED_EVENTS = [
-  { title: "Run for Fitness 10K", types: ["Marathon", "Athletics"], city: "Delhi", district: "Central Delhi", venue: "India Gate", date: "2026-07-02", price: 500, capacity: 500, registered: 320, prizePool: 50000, description: "10K run through Delhi landmarks. Chip timing, finisher medals, hydration stations.", imgId: "photo-1552674645-db764573271e" },
-  { title: "National Fitness Run", types: ["Marathon"], city: "Delhi", district: "South Delhi", venue: "JLN Stadium", date: "2026-09-12", price: 300, capacity: 1000, registered: 640, prizePool: 100000, description: "5K & 10K categories for all age groups. Finisher t-shirt and medal included.", imgId: "photo-1552674645-db764573271e" },
-  { title: "Jaipur Cricket League T20", types: ["Cricket"], city: "Jaipur", district: "Pink Square", venue: "TURBO TURF", date: "2026-09-20", price: 1500, capacity: 16, registered: 10, prizePool: 75000, description: "Team T20 league — 16 squads, professional umpires, live scoring.", imgId: "photo-1531415074968-036a1b083561" },
-  { title: "Ahmedabad Football Cup", types: ["Football"], city: "Ahmedabad", district: "Vastrapur", venue: "Urban Turf Arena", date: "2026-08-30", price: 1000, capacity: 12, registered: 12, prizePool: 60000, description: "7-a-side knockout cup. Completed — results published.", imgId: "photo-1575361204480-aadea25e6e68" },
-  { title: "Ghaziabad Badminton Open", types: ["Badminton"], city: "Ghaziabad", district: "Indirapuram", venue: "VT Badminton Academy", date: "2026-09-05", price: 400, capacity: 64, registered: 41, prizePool: 30000, description: "Singles & doubles brackets by skill rating. Shuttlecocks provided.", imgId: "photo-1626224545283-68617023875c" },
-  { title: "Pune Tennis Masters", types: ["Tennis"], city: "Pune", district: "Boat Club Road", venue: "Rally Masters Club", date: "2026-10-01", price: 600, capacity: 32, registered: 12, prizePool: 45000, description: "Round-robin groups into knockout draw. UTR-sanctioned.", imgId: "photo-1595435934249-5df7ed86e1c0" },
+  { title: "Bandra Table Tennis Grand Prix", types: ["Table Tennis"], city: "Mumbai", district: "Bandra West", venue: "Spin City Arena", date: "2026-10-17", price: 350, capacity: 64, registered: 38, prizePool: 25000, description: "Singles & doubles brackets by UTR rating. Balls and tables provided.", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/26d3930e4-f1fd-4535-ae9d-3790a53d96e74645.png" },
+  { title: "Jaipur Football Knockout Cup", types: ["Football"], city: "Jaipur", district: "Pink Square", venue: "TURBO TURF", date: "2026-10-18", price: 1000, capacity: 16, registered: 11, prizePool: 60000, description: "7-a-side knockout cup — professional referees, live scoring, medals.", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/06d3930e4-f1fd-4535-ae9d-3790a53d96e75167.png" },
+  { title: "Mumbai Cricket Premier League T20", types: ["Cricket"], city: "Mumbai", district: "Andheri East", venue: "Andheri Sports Turf", date: "2026-10-24", price: 1500, capacity: 16, registered: 14, prizePool: 75000, description: "Team T20 league — 16 squads, professional umpires, live streaming.", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/36d3930e4-f1fd-4535-ae9d-3790a53d96e76385.png" },
+  { title: "Chennai Basketball League", types: ["Basketball"], city: "Chennai", district: "Anna Nagar", venue: "Hoop City Arena", date: "2026-10-31", price: 1200, capacity: 12, registered: 7, prizePool: 50000, description: "3v3 street league — round robin into knockout finals.", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/76d3930e4-f1fd-4535-ae9d-3790a53d96e75581.png" },
+  { title: "Ghaziabad Badminton Open", types: ["Badminton"], city: "Ghaziabad", district: "Indirapuram", venue: "VT Badminton Academy", date: "2026-11-08", price: 400, capacity: 64, registered: 45, prizePool: 30000, description: "Singles & doubles brackets by skill rating. Shuttlecocks provided.", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/36d3930e4-f1fd-4535-ae9d-3790a53d96e77968.png" },
+  { title: "Delhi Midnight Marathon 2026", types: ["Marathon", "Athletics"], city: "Delhi", district: "Central Delhi", venue: "India Gate", date: "2026-11-14", price: 500, capacity: 500, registered: 328, prizePool: 100000, description: "10K night run through Delhi landmarks. Chip timing, finisher medals, hydration stations.", img: "https://images.unsplash.com/photo-1552674645-db764573271e?auto=format&fit=crop&w=900&q=60" },
+  { title: "Ahmedabad Volleyball Smash Cup", types: ["Volleyball"], city: "Ahmedabad", district: "Vastrapur", venue: "Smash Vault Arena", date: "2026-11-22", price: 800, capacity: 12, registered: 7, prizePool: 40000, description: "6-a-side volleyball knockout — floodlit finals on Sunday night.", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/26d3930e4-f1fd-4535-ae9d-3790a53d96e76807.png" },
+  { title: "Delhi Boxing Night Championship", types: ["Boxing"], city: "Delhi", district: "Karol Bagh", venue: "Capital Boxing Hub", date: "2026-11-28", price: 600, capacity: 32, registered: 21, prizePool: 55000, description: "Amateur boxing bouts across 6 weight categories. Gloves provided.", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/16d3930e4-f1fd-4535-ae9d-3790a53d96e73156.png" },
+  { title: "Powai Aquathon Swim Meet", types: ["Swimming"], city: "Mumbai", district: "Powai", venue: "Wave Riders Olympic Pool", date: "2026-12-05", price: 450, capacity: 80, registered: 52, prizePool: 35000, description: "50m & 100m freestyle, breaststroke and relay races — Olympic pool.", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/36d3930e4-f1fd-4535-ae9d-3790a53d96e77334.png" },
+  { title: "Pune Tennis Masters", types: ["Tennis"], city: "Pune", district: "Boat Club Road", venue: "Rally Masters Club", date: "2026-12-13", price: 600, capacity: 32, registered: 18, prizePool: 45000, description: "Round-robin groups into knockout draw. UTR-sanctioned event.", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/06d3930e4-f1fd-4535-ae9d-3790a53d96e74882.png" },
+  { title: "Jaipur Hockey League", types: ["Hockey"], city: "Jaipur", district: "Sanganer", venue: "Turfside Hockey Ground", date: "2026-12-20", price: 900, capacity: 8, registered: 5, prizePool: 48000, description: "11-a-side hockey league on brand-new astroturf. Sticks available on rent.", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/36d3930e4-f1fd-4535-ae9d-3790a53d96e75241.png" },
+  /* past event for the "Event Over" demo */
+  { title: "Ahmedabad Football Cup", types: ["Football"], city: "Ahmedabad", district: "Vastrapur", venue: "Urban Turf Arena", date: "2026-08-30", price: 1000, capacity: 12, registered: 12, prizePool: 60000, description: "7-a-side knockout cup. Completed — results published.", img: "https://images.unsplash.com/photo-1575361204480-aadea25e6e68?auto=format&fit=crop&w=900&q=60" },
 ];
 
-const CITY_FILTERS = ["All Cities", "Delhi", "Jaipur", "Ahmedabad", "Ghaziabad", "Pune"];
-const TYPE_FILTERS = ["All Types", "Marathon", "Cricket", "Football", "Badminton", "Tennis"];
+const CITY_FILTERS = ["All Cities", "Delhi", "Mumbai", "Jaipur", "Ahmedabad", "Ghaziabad", "Pune", "Chennai"];
+const TYPE_FILTERS = ["All Types", "Marathon", "Cricket", "Football", "Badminton", "Tennis", "Basketball", "Boxing", "Swimming"];
 
 const statusOf = (e) => {
   const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -39,6 +51,9 @@ export default function Events() {
     const unsub = onSnapshot(q, (snap) => {
       setEvents(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
       setLoading(false);
+    }, (err) => {
+      console.error("Firestore error:", err);
+      setLoading(false);
     });
     return () => unsub();
   }, []);
@@ -60,7 +75,7 @@ export default function Events() {
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="mb-8">
         <h1 className="text-3xl font-black text-white">🏟️ Events & <span className="text-[#FBBF24]">Tournaments</span></h1>
-        <p className="text-slate-400 text-sm mt-1">Register for marathons, leagues and opens near you.</p>
+        <p className="text-slate-400 text-sm mt-1">Register for marathons, leagues and opens near you — Oct to Dec 2026 season.</p>
       </div>
 
       {/* Filters */}
@@ -94,8 +109,8 @@ export default function Events() {
           return (
             <article key={e.id} onClick={() => navigate(`/events/${e.id}`)}
               className="group cursor-pointer overflow-hidden rounded-2xl border border-slate-700/60 bg-slate-900/80 backdrop-blur-md shadow-xl hover:-translate-y-1 hover:border-slate-600 transition-all duration-300">
-              <div className="relative h-44">
-                <img src={IMG(e.imgId)} alt={e.title} loading="lazy" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <div className="relative h-44 bg-slate-100">
+                <img src={e.img || IMG(e.imgId)} alt={e.title} loading="lazy" onError={onImgError} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent" />
                 <span className={`absolute left-4 top-4 rounded-full px-3 py-1 text-xs font-bold ${status === "Event Over" ? "bg-slate-700 text-slate-300" : status === "Live Today" ? "bg-red-500 text-white animate-pulse" : "bg-[#10B981] text-slate-950"}`}>{status}</span>
                 {e.prizePool > 0 && (
@@ -114,7 +129,7 @@ export default function Events() {
                 <div>
                   <div className="flex justify-between text-[11px] text-slate-400 mb-1">
                     <span className="flex items-center gap-1"><Users size={11} /> {e.registered}/{e.capacity}</span>
-                    <span>{e.registered >= e.capacity ? "Sold Out" : "spots left"}</span>
+                    <span>{e.registered >= e.capacity ? "Sold Out" : `${e.capacity - e.registered} spots left`}</span>
                   </div>
                   <div className="h-1.5 rounded-full bg-slate-700/60 overflow-hidden">
                     <div className="h-full bg-gradient-to-r from-[#10B981] to-blue-500" style={{ width: `${Math.min(100, (e.registered / e.capacity) * 100)}%` }} />

@@ -10,6 +10,12 @@ import {
 
 const IMG = (id) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=1400&q=70`;
 
+/* ✅ Guaranteed fallback if any image ever fails */
+const FALLBACK_IMG = "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/06d3930e4-f1fd-4535-ae9d-3790a53d96e75167.png";
+const onImgError = (e) => {
+  if (e.currentTarget.src !== FALLBACK_IMG) e.currentTarget.src = FALLBACK_IMG;
+};
+
 const statusOf = (e) => {
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const d = new Date(e.date + "T00:00:00");
@@ -39,17 +45,27 @@ export default function EventDetail() {
       const found = all.find((v) => v.id === param) || all.find((v) => v.title === param);
       if (found) setEvent(found);
       else setNotFound(true);
+    }, (err) => {
+      console.error("Firestore error:", err);
+      setNotFound(true);
     });
     return () => unsub();
   }, [id]);
 
-  if (notFound) return (
-    <main className="max-w-xl mx-auto px-4 py-24 text-center">
-      <p className="text-slate-400">Event not found.</p>
-      <Link to="/events" className="mt-4 inline-block text-sm font-bold text-[#10B981]">← Back to Events</Link>
-    </main>
-  );
-  if (!event) return <div className="min-h-[60vh] grid place-items-center"><Loader2 size={40} className="animate-spin text-[#10B981]" /></div>;
+  if (notFound) {
+    return (
+      <main className="max-w-xl mx-auto px-4 py-24 text-center">
+        <p className="text-slate-400">Event not found.</p>
+        <Link to="/events" className="mt-4 inline-block text-sm font-bold text-[#10B981]">← Back to Events</Link>
+      </main>
+    );
+  }
+  if (!event) {
+    return <div className="min-h-[60vh] grid place-items-center"><Loader2 size={40} className="animate-spin text-[#10B981]" /></div>;
+  }
+
+  /* ✅ NEW: supports full img URLs (new events) AND old imgId format */
+  const heroImg = event.img || IMG(event.imgId);
 
   const status = statusOf(event);
   const ended = status === "Event Over";
@@ -93,8 +109,8 @@ export default function EventDetail() {
   return (
     <main className="pb-16">
       {/* ── HERO ───────────────────────────────────── */}
-      <div className="relative h-[440px] overflow-hidden">
-        <img src={IMG(event.imgId)} alt={event.title} className="h-full w-full object-cover" />
+      <div className="relative h-[440px] overflow-hidden bg-slate-900">
+        <img src={heroImg} alt={event.title} onError={onImgError} className="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-[#0B1120]/40 to-transparent" />
         <div className="absolute left-6 right-6 bottom-8">
           <div className="flex flex-wrap gap-2 mb-3">

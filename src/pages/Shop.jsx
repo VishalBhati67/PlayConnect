@@ -1,6 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ShoppingCart, DollarSign, Key, Star, X, Check, Package, Award, Shield, Camera, Image as ImageIcon } from "lucide-react";
 import { useCart } from "../store/CartContext";
+import { collection, addDoc, deleteDoc, doc, serverTimestamp, query, where, onSnapshot } from "firebase/firestore";
+import { db } from "../firebase";
+import { useAuth } from "../store/AuthContext";
 
 const IMG = (id) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=900&q=80`;
 
@@ -9,29 +12,45 @@ const onImgError = (e) => {
   if (e.currentTarget.src !== FALLBACK_IMG) e.currentTarget.src = FALLBACK_IMG;
 };
 
+/* compress photo so it fits Firestore's 1MB limit */
+const compressImage = (file) =>
+  new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const scale = Math.min(1, 500 / img.width);
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.7));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
 /* ─────────────────────────── BUY data (19 products) ───────────── */
 const BUY_CATEGORIES = ["All", "Balls", "Rackets & Bats", "Protective Gear", "Accessories"];
 
 const BUY_PRODUCTS = [
   { name: "Pro Match Soccer Ball", category: "Balls", price: "₹799", tag: "New", desc: "FIFA Quality Pro certified · 32-panel design · Hand-stitched PU leather · Size 5", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/77f7b3fab-f165-4c6e-9798-451d26e995e87843.png", icon: Package },
-  { name: "Indoor Basketball", category: "Balls", price: "₹1,150", desc: "Composite leather cover · Deep channel design · Official size 7", img: IMG("photo-1519861531473-9200262188bf"), icon: Package },
+  { name: "Indoor Basketball", category: "Balls", price: "1,150", desc: "Composite leather cover · Deep channel design · Official size 7", img: IMG("photo-1519861531473-9200262188bf"), icon: Package },
   { name: "Official Volleyball", category: "Balls", price: "₹650", desc: "Soft-touch synthetic leather · 18-panel construction · Official weight", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/27f7b3fab-f165-4c6e-9798-451d26e995e84934.png", icon: Package },
   { name: "Tennis Balls (Pack of 3)", category: "Balls", price: "₹380", tag: "New", desc: "ITF approved · Premium felt cover · All-court performance", img: IMG("photo-1554068865-24cecd4e34b8"), icon: Package },
-  /* 🆕 */
   { name: "Football Pro Strike", category: "Balls", price: "₹999", tag: "New", desc: "Thermally bonded panels · High-visibility print · All-weather grip", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/06d3930e4-f1fd-4535-ae9d-3790a53d96e75167.png", icon: Package },
   { name: "Outdoor Basketball Pro", category: "Balls", price: "₹1,250", desc: "Rubberized outdoor cover · Extra grip channels · Size 7", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/76d3930e4-f1fd-4535-ae9d-3790a53d96e75581.png", icon: Package },
   { name: "Cricket Tennis Ball (Pack of 6)", category: "Balls", price: "₹300", desc: "Tape-ball grade · High bounce · Neon green for night matches", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/36d3930e4-f1fd-4535-ae9d-3790a53d96e76385.png", icon: Package },
   { name: "Cricket Bat — Kashmir Willow", category: "Rackets & Bats", price: "₹2,450", desc: "Grade A Kashmir willow · Short handle · 6 sweet spot grains", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/47f7b3fab-f165-4c6e-9798-451d26e995e84503.png", icon: Award },
-  { name: "Carbon Badminton Racquet", category: "Rackets & Bats", price: "₹1,850", tag: "New", desc: "Full carbon fiber frame · Isometric head · 83g weight", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/57f7b3fab-f165-4c6e-9798-451d26e995e81957.png", icon: Award },
+  { name: "Carbon Badminton Racquet", category: "Rackets & Bats", price: "1,850", tag: "New", desc: "Full carbon fiber frame · Isometric head · 83g weight", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/57f7b3fab-f165-4c6e-9798-451d26e995e81957.png", icon: Award },
   { name: "Pro Lite Tennis Racquet", category: "Rackets & Bats", price: "₹3,499", desc: "Graphite composite · 100 sq in head · Pre-strung at 55 lbs", img: IMG("photo-1622279457486-62dcc4a431d6"), icon: Award },
-  /* 🆕 */
   { name: "Table Tennis Paddle Set", category: "Rackets & Bats", price: "₹750", desc: "2 pro paddles + 3 balls · ITTF approved rubber · Carry case", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/26d3930e4-f1fd-4535-ae9d-3790a53d96e74645.png", icon: Award },
   { name: "Hockey Stick Composite", category: "Rackets & Bats", price: "₹1,650", desc: "Carbon-fiber blend · Low kick point · Anti-slip grip", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/36d3930e4-f1fd-4535-ae9d-3790a53d96e75241.png", icon: Award },
   { name: "Boxing / Sports Gloves", category: "Protective Gear", price: "₹1,200", desc: "Genuine leather · Multi-layer foam padding · Velcro wrist strap", img: IMG("photo-1549719386-74dfcbf7dbed"), icon: Shield },
   { name: "Football Shin Guards", category: "Protective Gear", price: "₹450", desc: "PP shell with EVA foam · Ankle protection · Adjustable straps", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/17f7b3fab-f165-4c6e-9798-451d26e995e82519.png", icon: Shield },
   { name: "Cricket Helmet with Grill", category: "Protective Gear", price: "₹2,100", desc: "ABS shell · Titanium grill · Ventilated · ISI certified", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/77f7b3fab-f165-4c6e-9798-451d26e995e81828.png", icon: Shield },
   { name: "Gym Knee Pads (Pair)", category: "Protective Gear", price: "₹350", desc: "Neoprene sleeve · Gel padding · Non-slip silicone grip", img: IMG("photo-1571019613454-1cb2f99b2d8b"), icon: Shield },
-  /* 🆕 Accessories */
   { name: "Swimming Goggles Pro", category: "Accessories", price: "₹599", tag: "New", desc: "Anti-fog coating · UV protection · Adjustable silicone strap", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/06d3930e4-f1fd-4535-ae9d-3790a53d96e73739.png", icon: Star },
   { name: "Shuttlecock Tube (10 pcs)", category: "Accessories", price: "₹420", desc: "Grade-A feather · Consistent flight · BWF standard speed 77", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/36d3930e4-f1fd-4535-ae9d-3790a53d96e77968.png", icon: Star },
   { name: "Sports Kit Bag 40L", category: "Accessories", price: "₹899", desc: "Waterproof base · Shoe compartment · Bottle pockets", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/26d3930e4-f1fd-4535-ae9d-3790a53d96e771766.png", icon: Star },
@@ -50,10 +69,8 @@ const RENT_ITEMS = [
   { name: "4D AI Massage Chair", brands: "Luxury Wellness Brands", category: "Home Gym & Fitness", price: "₹1,800", desc: "Zero-gravity recline · Full-body air massage · Bluetooth", img: IMG("photo-1544161515-4ab6ce6db874") },
   { name: "Electric Hydrofoil Surfboard (eFoil)", brands: "Lift Foils · Fliteboard", category: "Water Sports", price: "₹7,500", desc: "Carbon board · 2-hour battery · 45km/h · Wireless remote", img: IMG("photo-1505142468610-359e7d316be0") },
   { name: "Jet Ski / Personal Watercraft", brands: "Yamaha · Sea-Doo", category: "Water Sports", price: "₹5,500", desc: "150HP · 3-seater · Cruise control · Fuel included", img: IMG("photo-1544551763-46a013bb70d5") },
-  /* 🆕 */
-  { name: "Private Swim Lane (1 hr)", brands: "Olympic-size pool", category: "Water Sports", price: "₹800", desc: "Heated 50m pool · Lane rope reserved · Coach optional", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/36d3930e4-f1fd-4535-ae9d-3790a53d96e77334.png" },
+  { name: "Private Swim Lane (1 hr)", brands: "Olympic-size pool", category: "Water Sports", price: "800", desc: "Heated 50m pool · Lane rope reserved · Coach optional", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/36d3930e4-f1fd-4535-ae9d-3790a53d96e77334.png" },
   { name: "Expedition Mountaineering Kit", brands: "Sub-zero tents · high-altitude gear", category: "Mountaineering", price: "₹4,200", desc: "4-season tent · -40°C bag · Crampons · Ice axe · GPS", img: IMG("photo-1464822759023-fed622ff2c3b") },
-  /* 🆕 Court & Combat */
   { name: "Pro Tennis Ball Machine", brands: "Lobster · Spinfire", category: "Court Sports", price: "₹2,000", desc: "Programmable drills · 150-ball hopper · Remote control", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/06d3930e4-f1fd-4535-ae9d-3790a53d96e74882.png" },
   { name: "Portable Badminton Court Kit", brands: "BWF-spec mats + net", category: "Court Sports", price: "₹1,500", desc: "Roll-out court mat · Pro net & posts · Setup in 20 min", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/26d3930e4-f1fd-4535-ae9d-3790a53d96e71720.png" },
   { name: "Boxing Training Camp Kit", brands: "Ringside gear · heavy bags", category: "Combat Sports", price: "₹3,500", desc: "Heavy bag + stand · Speed bag · Wraps & gloves included", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/16d3930e4-f1fd-4535-ae9d-3790a53d96e73156.png" },
@@ -65,6 +82,7 @@ const CONDITIONS = ["New", "Like New", "Good", "Used"];
 /* ─────────────────────────── Page ─────────────────────────── */
 export default function Shop() {
   const { add } = useCart();
+  const { user } = useAuth();
   const [tab, setTab] = useState("buy");
   const [buyCat, setBuyCat] = useState("All");
   const [rentCat, setRentCat] = useState("All");
@@ -73,23 +91,37 @@ export default function Shop() {
   const [form, setForm] = useState({ name: "", category: "Balls", condition: "Good", price: "", img: "" });
   const [listings, setListings] = useState([]);
 
+  useEffect(() => {
+    if (!user) return;
+    const q = query(collection(db, "listings"), where("sellerUid", "==", user.uid));
+    return onSnapshot(q, (s) => setListings(s.docs.map((d) => ({ id: d.id, ...d.data() }))));
+  }, [user]);
+
   const buyFiltered = BUY_PRODUCTS.filter((p) => buyCat === "All" || p.category === buyCat);
   const rentFiltered = RENT_ITEMS.filter((r) => rentCat === "All" || r.category === rentCat);
 
-  /* ✅ IMAGE UPLOAD → base64 preview */
-  const onFile = (e) => {
+  /* ✅ IMAGE UPLOAD → compressed base64 */
+  const onFile = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setForm((f) => ({ ...f, img: reader.result }));
-    reader.readAsDataURL(file);
+    const compressed = await compressImage(file);
+    setForm((f) => ({ ...f, img: compressed }));
   };
 
-  const handleList = (e) => {
+  const handleList = async (e) => {
     e.preventDefault();
     if (!form.name.trim() || !form.price) return;
-    setListings((prev) => [{ id: Date.now(), ...form }, ...prev]);
-    setForm({ name: "", category: "Balls", condition: "Good", price: "", img: "" });
+    try {
+      await addDoc(collection(db, "listings"), {
+        ...form,
+        price: Number(form.price),
+        sellerUid: user?.uid || "guest",
+        sellerName: user?.name || "Guest Seller",
+        status: "Active",
+        createdAt: serverTimestamp(),
+      });
+      setForm({ name: "", category: "Balls", condition: "Good", price: "", img: "" });
+    } catch (err) { console.error(err); }
   };
 
   const TABS = [
@@ -163,7 +195,7 @@ export default function Shop() {
         </>
       )}
 
-      {/* ═══════════════ SELL (with image upload) ═══════════════ */}
+      {/* ═══════════════ SELL (with image upload → Firestore) ═══════════════ */}
       {tab === "sell" && (
         <div className="grid lg:grid-cols-3 gap-8">
           <form onSubmit={handleList} className="lg:col-span-1 h-fit rounded-2xl border border-slate-700/60 bg-slate-900/80 backdrop-blur-md p-6 space-y-4">
@@ -184,7 +216,7 @@ export default function Shop() {
                 <label className="mt-1.5 flex flex-col items-center gap-2 rounded-xl border border-dashed border-slate-600 bg-slate-950/60 px-4 py-6 cursor-pointer hover:border-[#F59E0B] transition-colors">
                   <Camera size={22} className="text-slate-400" />
                   <span className="text-xs font-semibold text-slate-300">Upload a photo</span>
-                  <span className="text-[10px] text-slate-500">JPG / PNG · shows on your listing</span>
+                  <span className="text-[10px] text-slate-500">JPG / PNG · auto-compressed for Firestore</span>
                   <input type="file" accept="image/*" onChange={onFile} className="hidden" />
                 </label>
               )}
@@ -227,7 +259,12 @@ export default function Shop() {
 
           <div className="lg:col-span-2">
             <h2 className="text-lg font-bold text-white mb-4">Your Listings ({listings.length})</h2>
-            {listings.length === 0 ? (
+            {!user ? (
+              <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-700 bg-slate-900/50 px-6 py-16 text-center">
+                <DollarSign size={28} className="text-slate-600" />
+                <p className="text-sm text-slate-400">Please sign in to view and manage your listings.</p>
+              </div>
+            ) : listings.length === 0 ? (
               <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-700 bg-slate-900/50 px-6 py-16 text-center">
                 <DollarSign size={28} className="text-slate-600" />
                 <p className="text-sm text-slate-400">No listings yet. Use the form to sell your first item!</p>
@@ -249,7 +286,7 @@ export default function Shop() {
                       <p className="text-xs text-slate-500">{l.category} · Condition: {l.condition}</p>
                       <div className="flex items-center justify-between pt-2">
                         <p className="text-lg font-black text-slate-900">₹{Number(l.price).toLocaleString("en-IN")}</p>
-                        <button onClick={() => setListings((prev) => prev.filter((x) => x.id !== l.id))}
+                        <button onClick={() => deleteDoc(doc(db, "listings", l.id))}
                           className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-100 transition-colors">
                           <X size={12} /> Remove
                         </button>
