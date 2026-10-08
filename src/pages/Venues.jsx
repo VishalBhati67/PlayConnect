@@ -215,12 +215,20 @@ export default function Venues() {
         )}
         {locStatus === "loading" && <div className="flex items-center gap-3 text-sm text-slate-300"><Loader2 size={18} className="animate-spin text-[#10B981]" /> Getting your live GPS location…</div>}
         {locStatus === "error" && (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="min-w-0"><p className="text-sm text-[#FBBF24]">⚠️ {locationError || "Couldn't access your location."}</p><p className="mt-1 text-[11px] text-slate-500">You can allow Location in your browser site settings and try again.</p></div>
-            <select onChange={(e) => pickCity(e.target.value)} defaultValue="" className="rounded-full border border-slate-700 bg-slate-950/60 px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#10B981] cursor-pointer">
-              <option value="" disabled>Choose city…</option>
-              {CITIES.map((c) => <option key={c.name}>{c.name}</option>)}
-            </select>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-sm text-[#FBBF24]">⚠️ {locationError || "Couldn't access your location."}</p>
+                <p className="mt-1 text-[11px] text-slate-500">After changing Chrome's Location permission, press Try Again without needing to leave this page.</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button onClick={enableLocation} className="inline-flex items-center gap-2 rounded-full bg-[#10B981] hover:bg-[#059669] px-5 py-2.5 text-sm font-bold text-slate-950 transition-all active:scale-95"><RefreshCw size={15} /> Try Again</button>
+                <select onChange={(e) => pickCity(e.target.value)} defaultValue="" className="rounded-full border border-slate-700 bg-slate-950/60 px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#10B981] cursor-pointer">
+                  <option value="" disabled>Choose city…</option>
+                  {CITIES.map((c) => <option key={c.name}>{c.name}</option>)}
+                </select>
+              </div>
+            </div>
           </div>
         )}
         {locReady && (
