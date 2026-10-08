@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../../firebase";
-import { Search, ShoppingBag, Menu, X, Bell, Shield, Home, MapPin, Gamepad2, Users, UserRound } from "lucide-react";
+import { Search, ShoppingBag, Menu, X, Bell, Shield, Home, MapPin, Gamepad2, Users, UserRound, Sparkles } from "lucide-react";
 import { useCart } from "../../store/CartContext";
 import { useAuth } from "../../store/AuthContext";
 import { isUserAdmin } from "../../adminConfig";
