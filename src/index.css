@@ -65,3 +65,10 @@
     opacity: .18;
   }
 }
+
+
+.hero-video { object-position: center center; }
+
+@media (max-width: 767px) {
+  .hero-video { object-position: center center; }
+}
