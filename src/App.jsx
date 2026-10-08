@@ -18,6 +18,7 @@ import Cart from "./pages/Cart";
 import VenueDetail from "./pages/VenueDetail";
 import EventDetail from "./pages/EventDetail";
 import Affiliate from "./pages/Affiliate";
+import Legal from "./pages/Legal";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 
@@ -50,6 +51,8 @@ function AppShell() {
           <Route path="/community" element={<Community />} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/login" element={<Login />} />
+          <Route path="/privacy" element={<Legal type="privacy" />} />
+          <Route path="/terms" element={<Legal type="terms" />} />
           <Route path="/verify-otp" element={<VerifyOTP />} />
           <Route path="*" element={<Navigate to="/" replace />} />
           <Route path="/cart" element={<Cart />} />
