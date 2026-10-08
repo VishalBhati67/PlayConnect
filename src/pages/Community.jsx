@@ -1,7 +1,8 @@
 import { useState } from "react";
+import { getLiveLocation } from "../utils/location";
 import {
   Users, Heart, MessageCircle, MapPin, Star, Send, UserPlus, Check, Trophy,
-  Loader2, LocateFixed, Navigation, X,
+  Loader2, LocateFixed, Navigation, X, RefreshCw,
 } from "lucide-react";
 
 const SPORT_TAGS = ["Football", "Cricket", "Badminton", "Tennis", "Basketball"];
@@ -68,17 +69,21 @@ export default function Community() {
   const [locStatus, setLocStatus] = useState("idle");
   const [radius, setRadius] = useState(250);
 
-  const enableLocation = () => {
-    if (!navigator.geolocation) { setLocStatus("error"); return; }
+  const [locationError, setLocationError] = useState("");
+  const enableLocation = async () => {
     setLocStatus("loading");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => { setUserLoc({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setLocStatus("ready"); },
-      () => setLocStatus("error"),
-      { timeout: 8000 }
-    );
+    setLocationError("");
+    try {
+      const location = await getLiveLocation();
+      setUserLoc(location);
+      setLocStatus("ready");
+    } catch (err) {
+      setLocationError(err.message || "Couldn't access your location.");
+      setLocStatus("error");
+    }
   };
 
-  const disableLocation = () => { setUserLoc(null); setLocStatus("idle"); };
+  const disableLocation = () => { setUserLoc(null); setLocStatus("idle"); setLocationError(""); };
 
   const pickCity = (cityName) => {
     const c = CITIES.find((x) => x.name === cityName);
@@ -189,7 +194,7 @@ export default function Community() {
 
         {locStatus === "error" && (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <p className="text-sm text-[#FBBF24]">⚠️ Couldn't access your location. Pick your city instead:</p>
+            <div><p className="text-sm text-[#FBBF24]">⚠️ {locationError || "Couldn't access your location. Pick your city instead:"}</p><p className="mt-1 text-[10px] text-slate-500">After changing Chrome permission, press Try Again.</p></div><div className="flex flex-wrap gap-2"><button onClick={enableLocation} className="inline-flex items-center gap-2 rounded-full border border-[#10B981]/40 bg-[#10B981]/10 px-4 py-2.5 text-xs font-bold text-[#6EE7B7]"><RefreshCw size={13} /> Try Again</button>
             <select
               onChange={(e) => pickCity(e.target.value)}
               defaultValue=""
