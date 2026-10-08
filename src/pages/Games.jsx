@@ -350,13 +350,13 @@ export default function Games() {
           return (
             <article key={g.id} className="group rounded-2xl border border-slate-700/60 bg-slate-900/80 backdrop-blur-md p-5 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-slate-600 space-y-4">
               <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <span className="grid place-items-center w-11 h-11 rounded-xl bg-slate-800/80 border border-slate-700 text-xl">{emojiOf(g.sport)}</span>
+                <button type="button" onClick={() => navigate(`/games/${encodeURIComponent(g.id)}`)} className="flex items-center gap-3 text-left group/title">
+                  <span className="grid place-items-center w-11 h-11 rounded-xl bg-slate-800/80 border border-slate-700 text-xl group-hover/title:border-[#10B981]/40 transition-colors">{emojiOf(g.sport)}</span>
                   <div>
-                    <h3 className="font-bold text-white leading-tight">{g.title}</h3>
+                    <h3 className="font-bold text-white leading-tight group-hover/title:text-[#6EE7B7] transition-colors">{g.title}</h3>
                     <p className="text-xs text-slate-500 mt-0.5">{g.sport}</p>
                   </div>
-                </div>
+                </button>
                 <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold ${status === "Open" ? "bg-[#10B981]/15 border border-[#10B981]/40 text-[#10B981]" : status === "Starting Soon" ? "bg-[#F59E0B]/15 border border-[#F59E0B]/40 text-[#FBBF24]" : "bg-slate-800 border border-slate-600 text-slate-400"}`}>
                   {status}
                 </span>
