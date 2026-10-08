@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const HERO_VIDEO =
-  "https://commons.wikimedia.org/wiki/Special:Redirect/file/Eureka_Stadium_21st_August_2026.webm";
+  "https://commons.wikimedia.org/wiki/Special:Redirect/file/Latvia-Gibraltar_football_2026-03-31.webm";
 
 const SPORTS = [
   { name: "Football", emoji: "⚽", img: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=900&q=80" },
