@@ -80,7 +80,7 @@ export default function Venues() {
 
   const initialSport = params.get("sport");
   const [filter, setFilter] = useState(initialSport && FILTERS.includes(initialSport) ? initialSport : "All");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(params.get("search") || "");
 
   const [userLoc, setUserLoc] = useState(null);
   const [locStatus, setLocStatus] = useState("idle");
