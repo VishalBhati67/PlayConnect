@@ -15,6 +15,7 @@ const NAV_LINKS = [
   { label: "Shop", path: "/shop" },
   { label: "Sponsors", path: "/sponsors" },
   { label: "Community", path: "/community" },
+  { label: "Sports Hub", path: "/hub" },
   { label: "Dashboard", path: "/dashboard" },
 ];
 
