@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useCart } from "../store/CartContext";
 import {
@@ -6,8 +6,21 @@ import {
   Zap, Play, ChevronDown, Radio, Sparkles, ShieldCheck, Clock3,
 } from "lucide-react";
 
-const HERO_VIDEO =
-  "https://upload.wikimedia.org/wikipedia/commons/3/30/O_Jogo_Bonito_%28The_Beautiful_Game%29.webm";
+const HERO_VIDEOS = [
+  { src: "https://cdn.coverr.co/videos/coverr-athletics-field-msqikb5u2s/1080p.mp4", label: "ATHLETICS" },
+  { src: "https://cdn.coverr.co/videos/coverr-basketball-court-in-auckland-new-zealand-pst3mk42mi/1080p.mp4", label: "BASKETBALL" },
+  { src: "https://cdn.coverr.co/videos/coverr-two-friends-playing-tennis-a3n4yfaz53/1080p.mp4", label: "TENNIS" },
+  { src: "https://cdn.coverr.co/videos/coverr-boxing-at-the-gym-l0egelzhoj/1080p.mp4", label: "BOXING" },
+  { src: "https://cdn.coverr.co/videos/coverr-man-jogging-on-the-beach-tomt9atzxy/1080p.mp4", label: "RUNNING" },
+];
+
+const HERO_QUOTES = [
+  "Don't wait for motivation. Create it.",
+  "Train your body. Challenge your limits.",
+  "Every session makes you stronger.",
+  "The next level starts with one more rep.",
+  "Play hard. Stay hungry. Keep moving.",
+];
 
 const SPORTS = [
   { name: "Football", emoji: "⚽", img: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=900&q=80" },
@@ -69,6 +82,17 @@ export default function Home() {
   const { add } = useCart();
   const [added, setAdded] = useState("");
   const [query, setQuery] = useState("");
+  const [heroVideo, setHeroVideo] = useState(0);
+  const [heroQuote, setHeroQuote] = useState(0);
+
+  useEffect(() => {
+    const videoTimer = setInterval(() => setHeroVideo((v) => (v + 1) % HERO_VIDEOS.length), 6500);
+    const quoteTimer = setInterval(() => setHeroQuote((q) => (q + 1) % HERO_QUOTES.length), 3300);
+    return () => {
+      clearInterval(videoTimer);
+      clearInterval(quoteTimer);
+    };
+  }, []);
 
   const addToCart = (p) => {
     add({ name: p.title, price: p.price, category: p.category });
@@ -89,18 +113,19 @@ export default function Home() {
 
         <div className="absolute inset-0 -z-20" aria-hidden="true">
           <video
+            key={HERO_VIDEOS[heroVideo].src}
             autoPlay
             muted
             loop
             playsInline
             preload="metadata"
             poster={SPORTS[0].img}
-            className="h-full w-full object-cover opacity-38 saturate-[0.85] contrast-[1.08]"
+            className="h-full w-full object-cover opacity-55 saturate-[0.92] contrast-[1.12] brightness-[0.72] transition-opacity duration-1000"
           >
-            <source src={HERO_VIDEO} type="video/webm" />
+            <source src={HERO_VIDEOS[heroVideo].src} type="video/mp4" />
           </video>
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(16,185,129,0.18),transparent_38%),linear-gradient(180deg,rgba(5,10,20,0.25)_0%,rgba(5,10,20,0.74)_68%,#050A14_100%)]" />
-          <div className="absolute inset-0 bg-slate-950/30" />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,7,18,0.88)_0%,rgba(3,7,18,0.48)_42%,rgba(3,7,18,0.28)_72%,rgba(3,7,18,0.62)_100%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_52%_42%,rgba(16,185,129,0.20),transparent_36%),linear-gradient(180deg,rgba(3,7,18,0.15)_0%,rgba(3,7,18,0.28)_55%,#050A14_100%)]" />
         </div>
 
         {/* animated depth grid + light trails */}
