@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, onSnapshot, addDoc, doc, updateDoc, arrayUnion, arrayRemove, query } from "firebase/firestore";
+import { collection, onSnapshot, addDoc, setDoc, doc, updateDoc, arrayUnion, arrayRemove, query } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../store/AuthContext";
 import { Users, MapPin, CalendarDays, Clock, Plus, X, Check, Trophy, Loader2, LocateFixed, Navigation, DatabaseZap } from "lucide-react";
@@ -11,6 +11,9 @@ const SPORT_OPTIONS = [
   { name: "Badminton", emoji: "🏸" },
   { name: "Basketball", emoji: "🏀" },
   { name: "Tennis", emoji: "🎾" },
+  { name: "Volleyball", emoji: "🏐" },
+  { name: "Table Tennis", emoji: "🏓" },
+  { name: "Hockey", emoji: "🏑" },
 ];
 
 /* ── City coordinates ─────────────────────────────────────────── */
@@ -26,12 +29,20 @@ const CITIES = [
 
 /* ── SEED DATA ────────────────────────────────────────────────── */
 const SEED_GAMES = [
-  { title: "5v5 Football Match", sport: "Football", venue: "Urban Turf Arena", city: "Vastrapur, Ahmedabad", date: "Today", time: "7:00 PM", joinedBy: [], needed: 10, fee: "₹100", createdBy: "system", lat: 23.0225, lng: 72.5714 },
-  { title: "Cricket Nets Practice", sport: "Cricket", venue: "TURBO TURF", city: "Pink Square, Jaipur", date: "Tomorrow", time: "6:30 AM", joinedBy: [], needed: 6, fee: "Free", createdBy: "system", lat: 26.9124, lng: 75.7873 },
-  { title: "Badminton Doubles Night", sport: "Badminton", venue: "VT Badminton Academy", city: "Ghaziabad", date: "Today", time: "8:00 PM", joinedBy: [], needed: 4, fee: "₹150", createdBy: "system", lat: 28.6692, lng: 77.4538 },
-  { title: "Basketball 3v3 Street Cup", sport: "Basketball", venue: "Hoop City", city: "Chennai", date: "Sat, 05 Sep", time: "5:00 PM", joinedBy: [], needed: 6, fee: "₹80", createdBy: "system", lat: 13.0827, lng: 80.2707 },
-  { title: "Tennis Singles Rally", sport: "Tennis", venue: "Rally Masters Club", city: "Boat Club Road, Pune", date: "Sun, 06 Sep", time: "7:00 AM", joinedBy: [], needed: 2, fee: "₹200", createdBy: "system", lat: 18.5204, lng: 73.8567 },
-  { title: "Weekend Football Friendly", sport: "Football", venue: "The South PickleBall Arena", city: "Sitapura, Jaipur", date: "Sun, 06 Sep", time: "6:00 PM", joinedBy: [], needed: 14, fee: "₹120", createdBy: "system", lat: 26.852, lng: 75.803 },
+  { title: "Mumbai Evening 5v5 Football", sport: "Football", venue: "Andheri Sports Turf", city: "Andheri, Mumbai", date: "Today", time: "7:30 PM", joinedBy: [], needed: 10, fee: "₹100", createdBy: "system", lat: 19.1197, lng: 72.8468 },
+  { title: "Bandra Cricket Nets", sport: "Cricket", venue: "Bandra Cricket Ground", city: "Bandra, Mumbai", date: "Tomorrow", time: "6:30 AM", joinedBy: [], needed: 6, fee: "Free", createdBy: "system", lat: 19.0607, lng: 72.8362 },
+  { title: "Navi Mumbai Badminton Doubles", sport: "Badminton", venue: "Nerul Sports Academy", city: "Nerul, Navi Mumbai", date: "Tomorrow", time: "8:00 PM", joinedBy: [], needed: 4, fee: "₹150", createdBy: "system", lat: 19.033, lng: 73.0297 },
+  { title: "Powai 3v3 Basketball Run", sport: "Basketball", venue: "Hoop City Arena", city: "Powai, Mumbai", date: "Sat, 10 Oct", time: "5:00 PM", joinedBy: [], needed: 6, fee: "₹80", createdBy: "system", lat: 19.1176, lng: 72.906 },
+  { title: "Worli Tennis Rally", sport: "Tennis", venue: "Worli Tennis Club", city: "Worli, Mumbai", date: "Sun, 11 Oct", time: "7:00 AM", joinedBy: [], needed: 2, fee: "₹200", createdBy: "system", lat: 19.0178, lng: 72.8173 },
+  { title: "Thane Weekend Football Friendly", sport: "Football", venue: "Thane Sports Arena", city: "Thane", date: "Sun, 11 Oct", time: "6:00 PM", joinedBy: [], needed: 14, fee: "₹120", createdBy: "system", lat: 19.2183, lng: 72.9781 },
+  { title: "Vashi Volleyball 6v6", sport: "Volleyball", venue: "Vashi Sports Complex", city: "Vashi, Navi Mumbai", date: "Mon, 12 Oct", time: "7:00 PM", joinedBy: [], needed: 12, fee: "₹100", createdBy: "system", lat: 19.0771, lng: 72.9987 },
+  { title: "Pune Table Tennis Meetup", sport: "Table Tennis", venue: "Spin Masters Club", city: "Baner, Pune", date: "Tue, 13 Oct", time: "8:00 PM", joinedBy: [], needed: 8, fee: "₹120", createdBy: "system", lat: 18.559, lng: 73.7868 },
+  { title: "Delhi Cricket T20 Practice", sport: "Cricket", venue: "Dwarka Cricket Ground", city: "Dwarka, Delhi", date: "Wed, 14 Oct", time: "6:00 AM", joinedBy: [], needed: 16, fee: "₹200", createdBy: "system", lat: 28.5921, lng: 77.046, },
+  { title: "Ahmedabad Basketball 3v3", sport: "Basketball", venue: "Hoop Ahmedabad", city: "Vastrapur, Ahmedabad", date: "Thu, 15 Oct", time: "6:30 PM", joinedBy: [], needed: 6, fee: "₹90", createdBy: "system", lat: 23.0365, lng: 72.5293 },
+  { title: "Jaipur Hockey Evening Game", sport: "Hockey", venue: "Pink City Hockey Turf", city: "Sanganer, Jaipur", date: "Fri, 16 Oct", time: "7:00 PM", joinedBy: [], needed: 14, fee: "₹150", createdBy: "system", lat: 26.8206, lng: 75.7936 },
+  { title: "Chennai Badminton Singles", sport: "Badminton", venue: "SmashPoint Arena", city: "Velachery, Chennai", date: "Sat, 17 Oct", time: "9:00 AM", joinedBy: [], needed: 2, fee: "₹180", createdBy: "system", lat: 12.9815, lng: 80.218 },
+  { title: "Mumbai Sunday Cricket League", sport: "Cricket", venue: "BKC Cricket Ground", city: "BKC, Mumbai", date: "Sun, 18 Oct", time: "8:00 AM", joinedBy: [], needed: 22, fee: "₹250", createdBy: "system", lat: 19.066, lng: 72.8677 },
+  { title: "Andheri Night Football 7s", sport: "Football", venue: "Metro Turf Arena", city: "Andheri, Mumbai", date: "Sun, 18 Oct", time: "8:30 PM", joinedBy: [], needed: 14, fee: "₹150", createdBy: "system", lat: 19.119, lng: 72.846 },
 ];
 
 const RADII = [10, 25, 50, 100, "All"];
@@ -55,9 +66,10 @@ export default function Games() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [games, setGames] = useState([]);
+  const [games, setGames] = useState(SEED_GAMES.map((g) => ({ ...g, id: `local-${g.title}` })));
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
+  const syncStarted = useRef(false);
   const [filter, setFilter] = useState("All");
   const [showForm, setShowForm] = useState(false);
 
@@ -71,9 +83,33 @@ export default function Games() {
   /* ── 1. LIVE FIRESTORE LISTENER ─────────────────── */
   useEffect(() => {
     const q = query(collection(db, "games"));
-    const unsub = onSnapshot(q, (snapshot) => {
+    const unsub = onSnapshot(q, async (snapshot) => {
       const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-      setGames(data);
+      const existingTitles = new Set(data.map((g) => g.title));
+      const localMissing = SEED_GAMES
+        .filter((g) => !existingTitles.has(g.title))
+        .map((g) => ({ ...g, id: `local-${g.title}` }));
+
+      // Always show the fresh catalog even if Firestore write permissions
+      // prevent automatic seeding.
+      setGames([...data, ...localMissing]);
+      setLoading(false);
+
+      // Best-effort sync to Firebase, without making display depend on it.
+      if (!syncStarted.current && localMissing.length) {
+        syncStarted.current = true;
+        try {
+          await Promise.all(localMissing.map((game) => {
+            const safeId = `seed-${game.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
+            return setDoc(doc(db, "games", safeId), game, { merge: true });
+          }));
+        } catch (err) {
+          console.warn("Firebase game sync skipped/blocked; fresh games remain visible.", err);
+        }
+      }
+    }, (err) => {
+      console.error("Firestore error:", err);
+      setGames(SEED_GAMES.map((g) => ({ ...g, id: `local-${g.title}` })));
       setLoading(false);
     });
     return () => unsub();
