@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { collection, onSnapshot, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../store/AuthContext";
+import { getVenueImage } from "../utils/venueImages";
 import {
   MapPin, Star, ChevronLeft, ChevronRight, Image as ImageIcon, MessageSquare,
   Share2, Heart, Navigation, Loader2, CheckCircle2, Zap,
@@ -69,7 +70,8 @@ export default function VenueDetail() {
   }
 
   /* ✅ UPDATED: supports both full img URLs and old imgId format */
-  const images = venue.images?.length ? venue.images : [venue.img || IMG(venue.imgId)];
+  const curatedImage = getVenueImage(venue);
+  const images = venue.images?.length ? venue.images : (curatedImage ? [curatedImage] : []);
   
   const courts = (venue.sports || ["General"]).map((s, i) => ({
     name: i === 0 ? venue.name : `${venue.name} — ${s}`,
