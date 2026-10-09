@@ -5,12 +5,11 @@ import { db } from "../firebase";
 import { useAuth } from "../store/AuthContext";
 import { MapPin, Star, Search, Loader2, LocateFixed, Navigation, X, DatabaseZap, RefreshCw } from "lucide-react";
 import { getLiveLocation, formatLocationLabel } from "../utils/location";
+import { getVenueImage } from "../utils/venueImages";
 
-const IMG = (id) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=900&q=60`;
-const FALLBACK_IMG = IMG("photo-1575361204480-aadea25e6e68");
-const onImgError = (e) => { if (e.currentTarget.src !== FALLBACK_IMG) e.currentTarget.src = FALLBACK_IMG; };
-/* supports old docs (imgId) and new docs (full img url) */
-const imgUrl = (v) => v.img || IMG(v.imgId);
+const onImgError = (e) => { e.currentTarget.style.display = "none"; };
+/* Supports legacy Firestore records while correcting demo images by venue name. */
+const imgUrl = (v) => getVenueImage(v);
 
 const CITIES = [
   { name: "Ahmedabad", lat: 23.0225, lng: 72.5714 },
@@ -24,30 +23,30 @@ const CITIES = [
 
 /* ── 18 VENUES · 11 SPORTS · unique image each ───────────────── */
 const SEED_VENUES = [
-  { name: "The South PickleBall Arena", address: "Sitapura, Jaipur", sports: ["Pickleball"], price: 550, rating: 4.9, reviews: 28, badge: "Featured", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/26d3930e4-f1fd-4535-ae9d-3790a53d96e71720.png", lat: 26.852, lng: 75.803 },
-  { name: "PaddleX | The Pickleball Club", address: "Mansarovar, Jaipur", sports: ["Pickleball"], price: 800, rating: 4.3, reviews: 26, badge: "Featured", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/26d3930e4-f1fd-4535-ae9d-3790a53d96e77519.png", lat: 26.8656, lng: 75.8064 },
-  { name: "VT Badminton Academy", address: "Ghaziabad, UP", sports: ["Badminton"], price: 300, rating: 4.7, reviews: 16, badge: "Featured", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/36d3930e4-f1fd-4535-ae9d-3790a53d96e77968.png", lat: 28.6692, lng: 77.4538 },
-  { name: "TURBO TURF", address: "Pink Square Mall, Jaipur", sports: ["Cricket", "Football"], price: 1100, rating: 4.2, reviews: 41, badge: "New", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/36d3930e4-f1fd-4535-ae9d-3790a53d96e76385.png", lat: 26.9124, lng: 75.7873 },
-  { name: "Rally Masters Tennis Club", address: "Boat Club Road, Pune", sports: ["Tennis"], price: 1100, rating: 4.8, reviews: 176, badge: "Verified", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/06d3930e4-f1fd-4535-ae9d-3790a53d96e74882.png", lat: 18.5308, lng: 73.8475 },
-  { name: "Urban Turf Arena", address: "Vastrapur, Ahmedabad", sports: ["Football", "Cricket"], price: 900, rating: 4.4, reviews: 334, badge: "Verified", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/06d3930e4-f1fd-4535-ae9d-3790a53d96e75167.png", lat: 23.0225, lng: 72.5714 },
-  { name: "Marine Drive Basketball Court", address: "Marine Drive, Mumbai", sports: ["Basketball"], price: 700, rating: 4.6, reviews: 98, badge: "Verified", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/76d3930e4-f1fd-4535-ae9d-3790a53d96e75581.png", lat: 18.9426, lng: 72.8235 },
-  { name: "Andheri Sports Turf", address: "Andheri East, Mumbai", sports: ["Football", "Cricket"], price: 1200, rating: 4.5, reviews: 210, badge: "Featured", img: "https://images.unsplash.com/photo-1575361204480-aadea25e6e68?w=900&q=60", lat: 19.1197, lng: 72.8464 },
-  { name: "Powai Pickleball Hub", address: "Powai, Mumbai", sports: ["Pickleball"], price: 650, rating: 4.7, reviews: 64, badge: "New", img: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=900&q=60", lat: 19.1176, lng: 72.906 },
+  { name: "The South PickleBall Arena", address: "Sitapura, Jaipur", sports: ["Pickleball"], price: 550, rating: 4.9, reviews: 28, badge: "Featured", img: "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=900&q=60", lat: 26.852, lng: 75.803 },
+  { name: "PaddleX | The Pickleball Club", address: "Mansarovar, Jaipur", sports: ["Pickleball"], price: 800, rating: 4.3, reviews: 26, badge: "Featured", img: "https://images.unsplash.com/photo-1611251135345-18c56206b863?auto=format&fit=crop&w=900&q=60", lat: 26.8656, lng: 75.8064 },
+  { name: "VT Badminton Academy", address: "Ghaziabad, UP", sports: ["Badminton"], price: 300, rating: 4.7, reviews: 16, badge: "Featured", img: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=900&q=60", lat: 28.6692, lng: 77.4538 },
+  { name: "TURBO TURF", address: "Pink Square Mall, Jaipur", sports: ["Cricket", "Football"], price: 1100, rating: 4.2, reviews: 41, badge: "New", img: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=900&q=60", lat: 26.9124, lng: 75.7873 },
+  { name: "Rally Masters Tennis Club", address: "Boat Club Road, Pune", sports: ["Tennis"], price: 1100, rating: 4.8, reviews: 176, badge: "Verified", img: "https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&w=900&q=60", lat: 18.5308, lng: 73.8475 },
+  { name: "Urban Turf Arena", address: "Vastrapur, Ahmedabad", sports: ["Football", "Cricket"], price: 900, rating: 4.4, reviews: 334, badge: "Verified", img: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=900&q=60", lat: 23.0225, lng: 72.5714 },
+  { name: "Marine Drive Basketball Court", address: "Marine Drive, Mumbai", sports: ["Basketball"], price: 700, rating: 4.6, reviews: 98, badge: "Verified", img: "https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=900&q=60", lat: 18.9426, lng: 72.8235 },
+  { name: "Andheri Sports Turf", address: "Andheri East, Mumbai", sports: ["Football", "Cricket"], price: 1200, rating: 4.5, reviews: 210, badge: "Featured", img: "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=900&q=60", lat: 19.1197, lng: 72.8464 },
+  { name: "Powai Pickleball Hub", address: "Powai, Mumbai", sports: ["Pickleball"], price: 650, rating: 4.7, reviews: 64, badge: "New", img: "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&w=900&q=60", lat: 19.1176, lng: 72.906 },
   /*  BOXING */
-  { name: "Knockout Boxing Academy", address: "Andheri West, Mumbai", sports: ["Boxing"], price: 900, rating: 4.8, reviews: 122, badge: "Verified", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/16d3930e4-f1fd-4535-ae9d-3790a53d96e73156.png", lat: 19.1358, lng: 72.8265 },
-  { name: "Capital Boxing Hub", address: "Karol Bagh, Delhi", sports: ["Boxing"], price: 750, rating: 4.5, reviews: 87, badge: "Featured", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/26d3930e4-f1fd-4535-ae9d-3790a53d96e771766.png", lat: 28.652, lng: 77.19 },
-  { name: "Champion Boxing & Fitness", address: "Indirapuram, Ghaziabad", sports: ["Boxing"], price: 600, rating: 4.3, reviews: 54, badge: "New", img: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=900&q=60", lat: 28.644, lng: 77.371 },
+  { name: "Knockout Boxing Academy", address: "Andheri West, Mumbai", sports: ["Boxing"], price: 900, rating: 4.8, reviews: 122, badge: "Verified", img: "https://images.unsplash.com/photo-1599058917212-d750089bc07e?auto=format&fit=crop&w=900&q=60", lat: 19.1358, lng: 72.8265 },
+  { name: "Capital Boxing Hub", address: "Karol Bagh, Delhi", sports: ["Boxing"], price: 750, rating: 4.5, reviews: 87, badge: "Featured", img: "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=900&q=60", lat: 28.652, lng: 77.19 },
+  { name: "Champion Boxing & Fitness", address: "Indirapuram, Ghaziabad", sports: ["Boxing"], price: 600, rating: 4.3, reviews: 54, badge: "New", img: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=900&q=60", lat: 28.644, lng: 77.371 },
   /* 🏊 SWIMMING */
-  { name: "AquaFit Swimming Complex", address: "Shivaji Nagar, Pune", sports: ["Swimming"], price: 400, rating: 4.6, reviews: 143, badge: "Verified", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/06d3930e4-f1fd-4535-ae9d-3790a53d96e73739.png", lat: 18.5362, lng: 73.8478 },
-  { name: "Wave Riders Olympic Pool", address: "Bandra West, Mumbai", sports: ["Swimming"], price: 500, rating: 4.7, reviews: 96, badge: "Featured", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/36d3930e4-f1fd-4535-ae9d-3790a53d96e77334.png", lat: 19.0596, lng: 72.8295 },
+  { name: "AquaFit Swimming Complex", address: "Shivaji Nagar, Pune", sports: ["Swimming"], price: 400, rating: 4.6, reviews: 143, badge: "Verified", img: "https://images.unsplash.com/photo-1530549387789-4c1017266635?auto=format&fit=crop&w=900&q=60", lat: 18.5362, lng: 73.8478 },
+  { name: "Wave Riders Olympic Pool", address: "Bandra West, Mumbai", sports: ["Swimming"], price: 500, rating: 4.7, reviews: 96, badge: "Featured", img: "https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?auto=format&fit=crop&w=900&q=60", lat: 19.0596, lng: 72.8295 },
   /* 🏐 VOLLEYBALL */
-  { name: "Smash Vault Volleyball Arena", address: "Saket, New Delhi", sports: ["Volleyball"], price: 600, rating: 4.4, reviews: 71, badge: "Verified", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/26d3930e4-f1fd-4535-ae9d-3790a53d96e76807.png", lat: 28.5245, lng: 77.2135 },
+  { name: "Smash Vault Volleyball Arena", address: "Saket, New Delhi", sports: ["Volleyball"], price: 600, rating: 4.4, reviews: 71, badge: "Verified", img: "https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?auto=format&fit=crop&w=900&q=60", lat: 28.5245, lng: 77.2135 },
   /*  TABLE TENNIS */
-  { name: "Spin City Table Tennis Club", address: "Vastrapur, Ahmedabad", sports: ["Table Tennis"], price: 350, rating: 4.6, reviews: 88, badge: "Verified", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/26d3930e4-f1fd-4535-ae9d-3790a53d96e74645.png", lat: 23.0265, lng: 72.5265 },
+  { name: "Spin City Table Tennis Club", address: "Vastrapur, Ahmedabad", sports: ["Table Tennis"], price: 350, rating: 4.6, reviews: 88, badge: "Verified", img: "https://images.unsplash.com/photo-1526232761682-d26e03ac148e?auto=format&fit=crop&w=900&q=60", lat: 23.0265, lng: 72.5265 },
   /* 🏑 HOCKEY */
-  { name: "Turfside Hockey Ground", address: "Sanganer, Jaipur", sports: ["Hockey"], price: 800, rating: 4.5, reviews: 39, badge: "New", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/36d3930e4-f1fd-4535-ae9d-3790a53d96e75241.png", lat: 26.815, lng: 75.79 },
+  { name: "Turfside Hockey Ground", address: "Sanganer, Jaipur", sports: ["Hockey"], price: 800, rating: 4.5, reviews: 39, badge: "New", img: "https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=900&q=60", lat: 26.815, lng: 75.79 },
   /* 🏏 CRICKET NETS */
-  { name: "GreenPark Cricket Nets", address: "Hauz Khas, New Delhi", sports: ["Cricket"], price: 500, rating: 4.4, reviews: 167, badge: "Verified", img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/06d3930e4-f1fd-4535-ae9d-3790a53d96e79596.png", lat: 28.5494, lng: 77.2001 },
+  { name: "GreenPark Cricket Nets", address: "Hauz Khas, New Delhi", sports: ["Cricket"], price: 500, rating: 4.4, reviews: 167, badge: "Verified", img: "https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&w=900&q=60", lat: 28.5494, lng: 77.2001 },
 ];
 
 const FILTERS = ["All", "Football", "Cricket", "Badminton", "Tennis", "Pickleball", "Basketball", "Boxing", "Swimming", "Volleyball", "Table Tennis", "Hockey"];
@@ -117,7 +116,7 @@ export default function Venues() {
         rating: null,
         reviews: 0,
         badge: "New",
-        img: "https://image.qwenlm.ai/public_source/7ba46c23-1a46-405f-9758-03c7b91340ca/7ba46c23-1a46-405f-9758-03c7b91340ca",
+        img: "",
         lat: c.lat,
         lng: c.lng,
         status: "Pending",
